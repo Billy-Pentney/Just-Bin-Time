@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">Just Bin Time</string>
+
+    <string-array name="BinDueCollectPhrases">
+        <item>It\'s BIN Time</item>
+        <item>BINspecting</item>
+        <item>It\'s BIN a while</item>
+        <item>Very BINteresting…</item>
+        <item>Batman &amp; RoBIN</item>
+        <item>I. am. BINevitable.</item>
+    </string-array>
+
+    <string-array name="BinNotDuePhrases">
+        <item>All clear!</item>
+        <item>Nothing to report</item>
+        <item>…just chillin\'</item>
+        <item>Hello there!</item>
+        <item>:)</item>
+    </string-array>
 </resources>

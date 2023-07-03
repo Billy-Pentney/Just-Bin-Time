@@ -8,15 +8,18 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
@@ -30,8 +33,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,9 +46,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
+import com.example.justbintime.Bin.Companion.COLLECT_TIME_TODAY
+import com.example.justbintime.Bin.Companion.COLLECT_TIME_TOMORROW
+import com.example.justbintime.Bin.Companion.HOURS_IMMINENT_COLLECTION
 import com.example.justbintime.ui.theme.AmberWarning
 import com.example.justbintime.ui.theme.AmberWarningDark
 import com.example.justbintime.ui.theme.JustBinTimeTheme
+import com.example.justbintime.ui.theme.RedWarning
+import com.example.justbintime.ui.theme.RedWarningDark
 import com.example.justbintime.viewmodel.BinViewModel
 import com.example.justbintime.viewmodel.BinViewModelFactory
 import java.time.LocalDateTime
@@ -49,6 +61,7 @@ import java.time.LocalDateTime
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             JustBinTimeTheme {
                 // A surface container using the 'background' color from the theme
@@ -81,23 +94,34 @@ fun MainScreen(bins: BinUiState) {
 }
 
 @Composable
-fun MainStatusText(bins: BinUiState) {
+fun MainStatusText(binState: BinUiState) {
     val now = LocalDateTime.now()
+    val context = LocalContext.current
+
+    val binPhraseGenerator = BinPhraseGenerator()
+    val binStatusText = binPhraseGenerator.getPhraseForState(context, binState)
+    val numBinsAwaiting = binState.getNumBinsToBeCollectedSoonText(now)
+
     Column(
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier.height(200.dp).padding(24.dp)
+        modifier = Modifier
+            .fillMaxHeight(0.25f)
+            .padding(24.dp)
     ) {
+        Spacer(modifier = Modifier.height(25.dp))
         Text(
-            text = bins.getBinStatus(now),
+            text = binStatusText,
             textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.CenterHorizontally),
-            fontSize = 32.sp
+            fontSize = 36.sp,
+            color = MaterialTheme.colors.onBackground
         )
         Text(
-            text = bins.getNumBinsToBeCollectedSoonText(now),
+            text = numBinsAwaiting,
             textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.CenterHorizontally),
-            fontSize = 16.sp
+            fontSize = 18.sp,
+            color = MaterialTheme.colors.onBackground
         )
     }
 }
@@ -124,123 +148,160 @@ fun DisplayBin(bin: Bin, now: LocalDateTime) {
     val actionText = remember { mutableStateOf(bin.getActionText(now)) }
 
     val binCollected = bin.hasBeenCollected(now)
-
     if (binCollected)
         bin.determineNextCollectionDate(now)
 
-    val imminentCollection = remember { mutableStateOf(bin.isCollectionImminent(now)) }
-    val nextCollectionDateStr = bin.formatDate(bin.nextCollectionDate, "EEEE, dd MMMM yyyy")
+    val nextCollectionDateStr = bin.formatDate(bin.nextCollectionDate, "EEEE, dd MMMM yyyy HH:mm")
 
-    val dark = isSystemInDarkTheme()
-    val bkgColor = bin.getBackgroundColor(dark)
-    val frgColor = bin.getForegroundColor(dark)
+    val darkTheme = isSystemInDarkTheme()
+    val bkgColor = bin.getBackgroundColor(darkTheme)
+    val frgColor = bin.getForegroundColor(darkTheme)
 
-    val warningColor = if (dark) AmberWarning else AmberWarningDark
-
-    Card (
+    Card(
         border = BorderStroke(2.dp, Color.Black),
         modifier = Modifier.fillMaxWidth(),
-        backgroundColor = bkgColor
+        backgroundColor = bkgColor,
+        shape = RoundedCornerShape(20.dp)
     ) {
-        Column (
-            modifier = Modifier.padding(16.dp),
-        ) {
-            Row (
-//                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+        Box {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
             ) {
-                if (bin.hasIcon()) {
-                    Image(
-                        painter = painterResource(bin.iconResId),
-                        colorFilter = ColorFilter.tint(frgColor),
-                        contentDescription = bin.getIconDescription(),
-                        modifier = Modifier
-                            .width(25.dp)
-                            .aspectRatio(1.0f)
-                            .align(Alignment.CenterVertically)
+                Row(
+//                horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (bin.hasIcon()) {
+                        Image(
+                            painter = painterResource(bin.iconResId),
+                            colorFilter = ColorFilter.tint(frgColor),
+                            contentDescription = bin.getIconDescription(),
+                            modifier = Modifier
+                                .width(35.dp)
+                                .aspectRatio(1.0f)
+                                .align(Alignment.CenterVertically)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                    }
+                    // Bin-name text
+                    Text(
+                        text = bin.name,
+                        color = frgColor,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 26.sp
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.weight(1f))
+                    WarningForCollection(bin, darkTheme)
                 }
-                // Bin-name text
-                Text(
-                    text = bin.name,
-                    color = frgColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp
-                )
-            }
 
-            Spacer(modifier = Modifier.height(4.dp))
-            // Indicates if bin has been collected
-            Row {
-                Text(text = "Next collection: ",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 18.sp,
-                    color = frgColor
-                )
-                Text(
-                    text = nextCollectionDateStr,
-                    fontSize = 18.sp,
-                    color = frgColor
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            // Indicates if bin has been collected
-            Row {
-                Text(
-                    text = "Status: ",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 18.sp,
-                    color = frgColor
-                )
-                Text(
-                    text = statusText.value,
-                    fontSize = 18.sp,
-                    color = frgColor
-                )
-            }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Indicates if bin has been collected
+                Row {
+                    Text(
+                        text = "Next collection: ",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp,
+                        color = frgColor
+                    )
+                    Text(
+                        text = nextCollectionDateStr,
+                        fontSize = 18.sp,
+                        color = frgColor
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // Indicates if bin has been collected
+                Row {
+                    Text(
+                        text = "Status: ",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp,
+                        color = frgColor
+                    )
+                    Text(
+                        text = statusText.value,
+                        fontSize = 18.sp,
+                        color = frgColor
+                    )
+                }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            if (imminentCollection.value) {
-                Column (
-                    modifier = Modifier.fillMaxWidth(),
+                Column(
+                    Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    WarningForCollection(warningColor)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // Toggle bin status
-                    Button(
-                        onClick = {
-                            bin.updateState(LocalDateTime.now())
-                            statusText.value = bin.getStatusText(now)
-                            actionText.value = bin.getActionText(now)
-                        },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = frgColor),
-                        content = {
-                            actionText.value?.let { Text(text = it, color = Color.White) }
-                        }
-                    )
+                    actionText.value?.let {
+                        // Toggle bin status
+                        Button(
+                            onClick = {
+                                bin.updateState(LocalDateTime.now())
+                                statusText.value = bin.getStatusText(now)
+                                actionText.value = bin.getActionText(now)
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = frgColor),
+                            content = {
+                                Text(text = it, color = bkgColor)
+                            },
+                        )
+                    }
                 }
+            }
+
+            // Card transparent overlay
+            if (bin.hasIcon()) {
+                Image(
+                    painter = painterResource(bin.iconResId),
+                    colorFilter = ColorFilter.tint(frgColor),
+                    contentDescription = bin.getIconDescription(),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.alpha(0.08f).matchParentSize()
+                )
             }
         }
     }
 }
 
 @Composable
-fun WarningForCollection(warnColor: Color) {
-    Row (verticalAlignment = Alignment.CenterVertically) {
-        Text("COLLECTING TOMORROW", color = warnColor, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.width(8.dp))
-        Image(
-            painter = painterResource(R.drawable.warning),
-            colorFilter = ColorFilter.tint(warnColor),
-            contentDescription = "Warning: bin is due for collection soon",
-            modifier = Modifier
-                .width(25.dp)
-                .aspectRatio(1.0f)
-        )
+fun WarningForCollection(bin: Bin, darkTheme: Boolean) {
+
+    val timeOfCollectionStr = bin.getWhenCollectionStr(LocalDateTime.now())
+
+    if (timeOfCollectionStr != null) {
+        val warnColor = when (timeOfCollectionStr) {
+            COLLECT_TIME_TODAY -> if (darkTheme) RedWarningDark else RedWarning
+            COLLECT_TIME_TOMORROW -> if (darkTheme) AmberWarningDark else AmberWarning
+            else -> Color.White
+        }
+
+        val warnTextColor = if (darkTheme) Color.White
+                            else           Color.Black
+
+        Card (
+            backgroundColor = warnColor,
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(10.dp,6.dp,10.dp,6.dp)
+            ) {
+                Text("DUE $timeOfCollectionStr",
+                    color = warnTextColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Image(
+                    painter = painterResource(R.drawable.warning),
+                    colorFilter = ColorFilter.tint(warnTextColor),
+                    contentDescription = "Warning sign indicating that this bin is due for collection soon",
+                    modifier = Modifier
+                        .width(20.dp)
+                        .aspectRatio(1.0f)
+                )
+            }
+        }
     }
 }
 

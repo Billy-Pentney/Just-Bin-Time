@@ -9,12 +9,6 @@ import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalField
 
-// Maximum number of hours till collection before the
-// warning sign is displayed for a bin
-const val HOURS_IMMINENT_COLLECTION: Int = 24
-// The default number of days between collections of a specific bin
-const val defaultCollectionInterval: Long = 14
-
 
 data class Bin(val name: String,
                val color: Color,
@@ -26,6 +20,17 @@ data class Bin(val name: String,
                var markedCollected: Boolean = false,
                val iconResId: Int = -1
 ) {
+
+    companion object {
+        // Maximum number of hours till collection before the warning sign is displayed for a bin
+        const val HOURS_IMMINENT_COLLECTION: Int = 24
+        // The default number of days between collections of a specific bin
+        const val defaultCollectionInterval: Long = 14
+        const val COLLECT_TIME_TODAY: String = "TODAY"
+        const val COLLECT_TIME_TOMORROW: String = "TOMORROW"
+    }
+
+
 //    val collectHour: Int = firstCollectionDate.get(ChronoField.HOUR_OF_DAY)
 //    val collectMin: Int = firstCollectionDate.get(ChronoField.MINUTE_OF_HOUR)
     var lastCollectionDate: LocalDateTime = firstCollectionDate
@@ -53,9 +58,9 @@ data class Bin(val name: String,
 
     fun getStatusText(now: LocalDateTime): String {
         return if (markedPutOut && now.isBefore(nextCollectionDate)) {
-            "Out for collection"
+            "Ready for collection"
         } else if (markedPutOut) {
-            "Out after collection"
+            "Ready to bring in"
         } else {
             "Not out"
         }
@@ -63,10 +68,10 @@ data class Bin(val name: String,
 
     fun getActionText(now: LocalDateTime): String? {
         if (!markedPutOut && isCollectionImminent(now)) {
-            return "Put Out"
+            return "I put the bin out"
         }
         else if (hasBeenCollected(now)) {
-            return "Bring In"
+            return "I brought the bin in"
         }
         return null
     }
@@ -87,6 +92,10 @@ data class Bin(val name: String,
 
     fun getIconDescription(): String {
         return this.name + " Bin Icon"
+    }
+
+    fun hoursTillCollection(now: LocalDateTime): Int {
+        return now.until(nextCollectionDate, ChronoUnit.HOURS).toInt()
     }
 
     fun isCollectionImminent(now: LocalDateTime): Boolean {
@@ -126,6 +135,17 @@ data class Bin(val name: String,
             markedPutOut = false
             putOutDate = null
         }
+    }
+
+    fun getWhenCollectionStr(now: LocalDateTime): String? {
+        val hours = hoursTillCollection(now)
+        if (hours <= nextCollectionDate.hour)
+            return "TODAY"
+        // 24
+        else if (hours <= HOURS_IMMINENT_COLLECTION)
+            return "TOMORROW"
+
+        return null
     }
 
 //    fun updateState(now: LocalDateTime): Boolean {

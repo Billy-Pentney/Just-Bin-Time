@@ -13,7 +13,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 const val origLandfillCollectDate = "2023-06-13T09:00:00"
-const val origRecyclingCollectDate = "2023-06-20T09:00:00"
+const val origRecyclingCollectDate = "2023-06-19T23:00:00"
 const val origGardenCollectDate = "2023-06-20T09:00:00"
 
 class BinFactory {
