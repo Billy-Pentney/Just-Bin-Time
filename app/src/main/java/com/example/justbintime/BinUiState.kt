@@ -1,23 +1,20 @@
 package com.example.justbintime
 
-import android.os.LocaleList
+import com.example.justbintime.data.Bin
 import java.time.LocalDateTime
 
-class BinUiState {
-    private val bins = ArrayList<Bin>()
+class BinUiState(var bins: List<Bin> = listOf()) {
+    var numBinsDue: Int = 0
+    var binDuePhrase: String = "?"
 
-    fun addBin(bin: Bin) {
-        bins.add(bin)
+    fun getMainBinStatusPhrase(): String {
+        binDuePhrase = BinPhraseGenerator.getPhraseForState(numBinsDue)
+        return binDuePhrase
     }
 
-    fun getSortedBins(now: LocalDateTime): ArrayList<Bin> {
-        bins.sortBy { b -> b.determineNextCollectionDate(now) }
+    fun getSortedBins(now: LocalDateTime): List<Bin> {
+//        bins.sortedBy { b -> b.determineNextCollectionDate(now) }
         return bins
-    }
-
-    fun getBinStatus(now: LocalDateTime): String {
-        if (numBinsCollectedSoon(now) > 0) return "It's BIN time!"
-        return "All clear!"
     }
 
     // Count the number of bins which will be collected in the next 24 hours
