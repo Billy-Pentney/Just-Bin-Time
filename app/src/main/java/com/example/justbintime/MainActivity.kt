@@ -1,19 +1,15 @@
 package com.example.justbintime
 
 import android.app.DatePickerDialog
-import android.app.Dialog
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
-import android.widget.ImageButton
-import android.widget.Space
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.WorkerThread
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,26 +32,20 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -64,19 +54,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.justbintime.data.Bin
 import com.example.justbintime.data.Bin.Companion.COLLECT_TIME_TODAY
 import com.example.justbintime.data.Bin.Companion.COLLECT_TIME_TOMORROW
 import com.example.justbintime.data.BinFactory
 import com.example.justbintime.ui.theme.AmberWarning
 import com.example.justbintime.ui.theme.AmberWarningDark
+import com.example.justbintime.ui.theme.GreenPrimary100
+import com.example.justbintime.ui.theme.GreenPrimary900
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.ui.theme.RedWarning
 import com.example.justbintime.ui.theme.RedWarningDark
 import com.example.justbintime.viewmodel.BinViewModel
 import com.example.justbintime.viewmodel.BinViewModelFactory
+import com.example.justbintime.viewmodel.IModelBinUIState
+import com.example.justbintime.viewmodel.SimBinViewModel
 import kotlinx.coroutines.Job
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,17 +87,6 @@ class MainActivity : ComponentActivity() {
         val app = (application as BinApplication)
         val bvmfactory = BinViewModelFactory(app.repo)
         val viewModel = ViewModelProvider(this,bvmfactory)[BinViewModel::class.java]
-
-        val binList: MutableState<List<Bin>> = mutableStateOf(listOf())
-
-        viewModel.binsLive.observe(this) { vmBinList ->
-            vmBinList.let {
-                viewModel.initDefaultBins()
-                // Initialise the bins, if there are none
-                binList.value = it
-                Log.e("BinObserver", "Got " + binList.value.size + " bins!")
-            }
-        }
 
         setContent {
             JustBinTimeTheme {
@@ -108,13 +98,21 @@ class MainActivity : ComponentActivity() {
                     // Load the phrases from the Resources
                     BinPhraseGenerator.initArrays(LocalContext.current)
 
-                    val updateBin = { b: Bin ->
-                        viewModel.updateBin(b)
-                    }
+                    val nhc = rememberNavController()
 
                     // Display the bin state
-//                    val uiState by viewModel.uiState.collectAsState()
-                    MainScreen(binList.value, updateBin)
+                    ViewBinScreen(viewModel, nhc)
+
+                    Scaffold { paddingValues ->
+                        NavHost(nhc, startDestination = BinScreen.ViewBins.name, modifier = Modifier.padding(paddingValues)) {
+                            composable(route = BinScreen.ViewBins.name) {
+                                ViewBinScreen(viewModel, nhc)
+                            }
+                            composable(route = BinScreen.AddBin.name) {
+                                AddBinScreen(viewModel, nhc)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -122,20 +120,35 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(binList: List<Bin>, updateBin: (Bin) -> Job) {
-    val binUiState = BinUiState(binList)
-    Log.e("BinUISetup", "Made a BinUIState with " + binList.size)
+fun ViewBinScreen(viewModel: BinViewModel, navController: NavController) {
+//    val binList by viewModel.binsLive.observeAsState()
+    val binUiState by viewModel.getUiState().collectAsState()
+    val now by remember { mutableStateOf(LocalDateTime.now()) }
 
-    Column (horizontalAlignment = Alignment.CenterHorizontally) {
-        MainStatusText(binUiState)
-        DisplayBins(binUiState, updateBin)
+    Log.e("ViewBinScreen", "Got a BinUIState with " + (binUiState.bins.size) + " bins")
+
+    LazyColumn(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        item {
+            MainStatusText(binUiState, now)
+        }
+        items(binUiState.getSortedBins(now)) { b ->
+            DisplayBin(viewModel, b, now)
+        }
+        Log.e("DisplayBins", "Attempt to display " + binUiState.bins.size)
+        item {
+            Spacer(modifier = Modifier.height(12.dp))
+            AddBinButton(navController)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
     }
 }
 
 @Composable
-fun MainStatusText(binUiState: BinUiState) {
-    val now = LocalDateTime.now()
-
+fun MainStatusText(binUiState: BinUiState, now: LocalDateTime) {
     val numBinsAwaiting = binUiState.getNumBinsToBeCollectedSoonText(now)
     val binStatusText = binUiState.getMainBinStatusPhrase()
 
@@ -165,31 +178,16 @@ fun MainStatusText(binUiState: BinUiState) {
 
 
 @Composable
-fun DisplayBins(binUiState: BinUiState, updateBin: (Bin) -> Job) {
-    val now = LocalDateTime.now()
-    val bins = binUiState.getSortedBins(now)
-    Log.e("DisplayBins", "Attempt to display " + bins.size)
-    LazyColumn(
-        modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        items(bins) { b ->
-            DisplayBin(b, now, updateBin)
-        }
-    }
-}
+fun DisplayBin(viewModel: IModelBinUIState, binOrig: Bin, now: LocalDateTime) {
+    val bin by remember { mutableStateOf(binOrig) }
 
-@Composable
-fun DisplayBin(bin: Bin, now: LocalDateTime, updateBin: (Bin) -> Job) {
-    val statusText = remember { mutableStateOf(bin.getStatusText(now)) }
-    val actionText = remember { mutableStateOf(bin.getActionText(now)) }
+    val statusText = bin.getStatusText(now)
+    val actionText = bin.getActionText(now)
 
-    val binCollected = remember { mutableStateOf(bin.hasBeenCollected(now)) }
-    if (binCollected.value)
+    if (bin.hasBeenCollected(now))
         bin.determineNextCollectionDate(now)
 
-    val nextCollectionDateStr = remember { mutableStateOf(bin.getNextCollectionDateStr()) }
+    val nextCollectionDateStr = bin.getNextCollectionDateStr()
 
     val darkTheme = isSystemInDarkTheme()
     val colors = bin.colors
@@ -238,8 +236,8 @@ fun DisplayBin(bin: Bin, now: LocalDateTime, updateBin: (Bin) -> Job) {
                     // Button to show DatePicker for changing the Bin Collection Date
                     val context = LocalContext.current
                     val onDateChange = { b: Bin ->
-                        updateBin(b)
-                        nextCollectionDateStr.value = b.getNextCollectionDateStr()
+                        viewModel.updateBin(b)
+//                        nextCollectionDateStr = b.getNextCollectionDateStr()
                     }
                     IconButton (
                         onClick = { DatePickerOverlay(context, bin, onDateChange).show() },
@@ -263,7 +261,7 @@ fun DisplayBin(bin: Bin, now: LocalDateTime, updateBin: (Bin) -> Job) {
                         color = frgColor
                     )
                     Text(
-                        text = nextCollectionDateStr.value,
+                        text = nextCollectionDateStr,
                         fontSize = 18.sp,
                         color = frgColor
                     )
@@ -278,7 +276,7 @@ fun DisplayBin(bin: Bin, now: LocalDateTime, updateBin: (Bin) -> Job) {
                         color = frgColor
                     )
                     Text(
-                        text = statusText.value,
+                        text = statusText,
                         fontSize = 18.sp,
                         color = frgColor
                     )
@@ -289,16 +287,13 @@ fun DisplayBin(bin: Bin, now: LocalDateTime, updateBin: (Bin) -> Job) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     WarningForCollection(bin, darkTheme)
-                    actionText.value?.let {
+                    actionText?.let {
                         Spacer(modifier = Modifier.height(8.dp))
                         // Toggle bin status
                         Button(
                             onClick = {
-                                val updateNow = LocalDateTime.now()
-                                bin.updateState(updateNow)
-                                updateBin(bin)
-                                statusText.value = bin.getStatusText(updateNow)
-                                actionText.value = bin.getActionText(updateNow)
+                                bin.updateState(LocalDateTime.now())
+                                viewModel.updateBin(bin)
                             },
                             colors = ButtonDefaults.buttonColors(backgroundColor = frgColor),
                             content = {
@@ -323,20 +318,46 @@ fun DisplayBin(bin: Bin, now: LocalDateTime, updateBin: (Bin) -> Job) {
             }
         }
     }
-
-
 }
 
-fun DatePickerOverlay(context: Context, bin: Bin, updateBin: (Bin) -> Unit): DatePickerDialog {
+
+
+@Composable
+fun AddBinButton(navController: NavController) {
+    val bkgColor = if (isSystemInDarkTheme()) GreenPrimary100 else GreenPrimary900
+    val frgColor = if (isSystemInDarkTheme()) GreenPrimary900 else GreenPrimary100
+
+    Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        Button(
+            colors = ButtonDefaults.buttonColors(backgroundColor = bkgColor, contentColor = frgColor),
+            onClick = {
+                navController.navigate(BinScreen.AddBin.name)
+                Log.e("BinNavigation", "Navigated to AddBinScreen")
+            }
+        ) {
+            Text("Add a Bin")
+        }
+    }
+}
+
+
+
+fun DatePickerOverlay(context: Context, bin: Bin, updateBin: (Bin) -> Job): DatePickerDialog {
     val year = bin.lastCollectionDate.year
+    // DatePickerDialog uses months 0-11, but LocalDateTime uses 1-12
     val month = bin.lastCollectionDate.monthValue-1
     val day = bin.lastCollectionDate.dayOfMonth
 
-    return DatePickerDialog(context, {
+    val dpd = DatePickerDialog(context, {
         // Add 1 since Jan=0 in the dialog
         _, y, m, d -> bin.updateLastCollection(y,m+1,d)
         updateBin(bin)
     }, year, month, day)
+    val zdt = ZonedDateTime.of(LocalDateTime.now(), ZoneId.systemDefault())
+    // Enforce that the day chosen must be in the past
+    dpd.datePicker.maxDate = zdt.toInstant().toEpochMilli()
+    dpd.setTitle(R.string.bin_date_picker_dialog_title)
+    return dpd
 }
 
 @Composable
@@ -382,15 +403,18 @@ fun WarningForCollection(bin: Bin, darkTheme: Boolean) {
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     val exampleState = BinFactory().makeUiState()
-    // No need to update the bin in the preview, so do nothing
-    val updateBin = { _: Bin -> Job() }
     BinPhraseGenerator.initArrays(LocalContext.current)
+    val navController = rememberNavController()
+    // Make an object which holds the Bin State, pretending to be a ViewModel
+    val simViewModel = SimBinViewModel(exampleState)
+
     JustBinTimeTheme {
-        MainScreen(exampleState.bins, updateBin)
+        DisplayBin(viewModel = simViewModel, binOrig = BinFactory().makeLandfillBin(), now = LocalDateTime.now())
     }
 }
 
@@ -398,10 +422,12 @@ fun DefaultPreview() {
 @Composable
 fun PreviewDark() {
     val exampleState = BinFactory().makeUiState()
-    // No need to update the bin in the preview, so do nothing
-    val updateBin = { _: Bin -> Job() }
     BinPhraseGenerator.initArrays(LocalContext.current)
+
+    val navController = rememberNavController()
+    val simViewModel = SimBinViewModel(exampleState)
+
     JustBinTimeTheme {
-        MainScreen(exampleState.bins, updateBin)
+        DisplayBin(viewModel = simViewModel, binOrig = BinFactory().makeLandfillBin(), now = LocalDateTime.now())
     }
 }

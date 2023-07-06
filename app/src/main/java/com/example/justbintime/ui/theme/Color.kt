@@ -2,10 +2,18 @@ package com.example.justbintime.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple200 = Color(0xFFBB86FC)
-val Purple500 = Color(0xFF6200EE)
-val Purple700 = Color(0xFF3700B3)
 val Teal200 = Color(0xFF03DAC5)
+val GreenPrimary50 = Color(0xFFC5E7C5)
+val GreenPrimary100 = Color(0xFFAADFAC)
+val GreenPrimary200 = Color(0xFF84C986)
+val GreenPrimary300 = Color(0xFF68AF68)
+val GreenPrimary400 = Color(0xFF519452)
+val GreenPrimary500 = Color(0xFF3F7C40)
+val GreenPrimary600 = Color(0xFF316132)
+val GreenPrimary700 = Color(0xFF265027)
+val GreenPrimary800 = Color(0xFF1C3C1D)
+val GreenPrimary900 = Color(0xFF112711)
+val GreenPrimary950 = Color(0xFF091409)
 
 
 val BinLandfillColorLight = Color(0xFF83B478)

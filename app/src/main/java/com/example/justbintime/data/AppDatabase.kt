@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 
-@Database(entities = [Bin::class], version = 3, exportSchema = true)
+@Database(entities = [Bin::class], version = 4, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun binDao(): BinDao

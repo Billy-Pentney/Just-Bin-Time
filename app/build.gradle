@@ -39,6 +39,7 @@ android {
         compose true
     }
     composeOptions {
+        // Required for Kotlin 1.9.0-RC
         kotlinCompilerExtensionVersion '1.4.8-dev-k1.9.0-RC-5532d15c918'
     }
     packagingOptions {
@@ -49,8 +50,6 @@ android {
 }
 
 dependencies {
-
-//    implementation "androidx.compose.compiler:compiler:1.4.8-dev-k1.9.0-RC-5532d15c918"
 
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2'
@@ -63,13 +62,28 @@ dependencies {
     implementation "androidx.room:room-ktx:$room_version"
     kapt "android.arch.persistence.room:compiler:1.1.1"
 
+
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
     implementation 'androidx.activity:activity-compose:1.7.2'
     implementation "androidx.compose.ui:ui:$compose_ui_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
+    implementation "androidx.navigation:navigation-compose:2.6.0"
+    implementation "androidx.compose.runtime:runtime-livedata:1.4.3"
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.6.1"
     implementation 'androidx.compose.material:material:1.4.3'
+
+    // Material Dialogs
+    // Source: https://github.com/vanpra/compose-material-dialogs
+    def matdialogs_version = "0.9.0"
+    implementation "io.github.vanpra.compose-material-dialogs:core:$matdialogs_version"
+    implementation "io.github.vanpra.compose-material-dialogs:datetime:$matdialogs_version"
+    implementation "io.github.vanpra.compose-material-dialogs:color:$matdialogs_version"
+
+    // NumberPicker
+    implementation "com.chargemap.compose:numberpicker:1.0.3"
+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

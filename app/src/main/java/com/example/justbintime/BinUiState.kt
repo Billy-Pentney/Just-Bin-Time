@@ -13,7 +13,7 @@ class BinUiState(var bins: List<Bin> = listOf()) {
     }
 
     fun getSortedBins(now: LocalDateTime): List<Bin> {
-//        bins.sortedBy { b -> b.determineNextCollectionDate(now) }
+        bins.sortedBy { b -> b.determineNextCollectionDate(now) }
         return bins
     }
 

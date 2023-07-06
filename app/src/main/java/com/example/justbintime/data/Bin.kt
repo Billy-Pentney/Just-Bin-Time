@@ -1,7 +1,6 @@
 package com.example.justbintime.data
 
 import android.content.Context
-import androidx.compose.ui.graphics.Color
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -15,15 +14,15 @@ data class Bin(
     @PrimaryKey(autoGenerate=true) val id: Int = 0,
     @ColumnInfo var name: String,
     @ColumnInfo var colors: BinColours,
-    @ColumnInfo var firstCollectionDate: LocalDateTime,
-    @ColumnInfo var daysBetweenCollections: Int = defaultCollectionInterval,
+    @ColumnInfo var lastCollectionDate: LocalDateTime,
+    @ColumnInfo var daysBetweenCollections: Int = DEFAULT_COLLECT_INTERVAL,
     @ColumnInfo var iconResStr: String? = null,
 ) {
     companion object {
         // Maximum number of hours till collection before the warning sign is displayed for a bin
         const val HOURS_IMMINENT_COLLECTION: Int = 24
         // The default number of days between collections of a specific bin
-        const val defaultCollectionInterval: Int = 14
+        const val DEFAULT_COLLECT_INTERVAL: Int = 14
         const val COLLECT_TIME_TODAY: String = "TODAY"
         const val COLLECT_TIME_TOMORROW: String = "TOMORROW"
 
@@ -33,15 +32,9 @@ data class Bin(
         const val BIN_OUT_COLLECTED: Int = 2
     }
 
-    @ColumnInfo var lastCollectionDate: LocalDateTime = firstCollectionDate
-    @ColumnInfo var nextCollectionDate: LocalDateTime
-    @ColumnInfo var putOutDate: LocalDateTime? = null
-
-//    var state: Int = BIN_INSIDE
-
-    init {
-        nextCollectionDate = lastCollectionDate.plusDays(daysBetweenCollections.toLong())
-    }
+    @ColumnInfo var nextCollectionDate: LocalDateTime = lastCollectionDate.plusDays(daysBetweenCollections.toLong())
+    @ColumnInfo var stateUpdatedAt: LocalDateTime = LocalDateTime.now()
+    @ColumnInfo var state: Int = BIN_INSIDE
 
     fun determineNextCollectionDate(now: LocalDateTime): LocalDateTime {
         while (nextCollectionDate.isBefore(now)) {
@@ -57,48 +50,27 @@ data class Bin(
     }
 
     fun isPutOut(): Boolean {
-        // Returns true iff putOutDate is not null and it
-        return putOutDate?.isAfter(lastCollectionDate) ?: false
+        return state == BIN_OUT_UNCOLLECTED || state == BIN_OUT_COLLECTED
     }
 
     fun getStatusText(now: LocalDateTime): String {
-//        val place = if (isPutOut()) "Out, " else "Not out"
-//        val collectDue =
-//            when {
-//                isCollectionImminent(now) -> "due for collection"
-//                isPutOut() && nextCollectionDate.isBefore(now) -> "ready to bring in"
-//                else -> "not due for collection"
-//            }
-
         return when {
             isPutOut() && isCollectionImminent(now) -> "Out, due for collection"
-            isPutOut() -> "Out, ready to bring in"
-            isCollectionImminent(now) -> "Not out, due for collection"
-            else -> "Not due for collection"
+            isPutOut()                              -> "Out, ready to bring in"
+            isCollectionImminent(now)               -> "Not out, due for collection"
+            else                                    -> "Not due for collection"
         }
-
-//        return "$place, $collectDue"
-
-//        return if (isPutOut() && now.isBefore(nextCollectionDate)) {
-//            "Ready for collection"
-//        } else if (isPutOut()) {
-//            "Ready to bring in"
-//        } else {
-//            "Not out"
-//        }
     }
 
+    // Returns a nullable string describing the permitted action at the given time
+    // based on whether the bin is put out/ready to be collected
+    // If null, then no action is possible
     fun getActionText(now: LocalDateTime): String? {
-        if (isCollectionImminent(now)) {
-            if (!isPutOut()) {
-                return "I put the bin out"
-            }
-//        else if (hasBeenCollected(now)) {
-            return "I brought the bin in"
-//        }
+        return when {
+            isCollectionImminent(now) && !isPutOut() -> "I've put the bin out!"
+            isPutOut()                               -> "I've brought the bin in!"
+            else                                     -> null
         }
-        // No Action
-        return null
     }
 
     fun getIconId(context: Context): Int? {
@@ -115,7 +87,10 @@ data class Bin(
             determineNextCollectionDate(now)
         }
         if (isPutOut()) {
-            return putOutDate!!.isBefore(lastCollectionDate) && lastCollectionDate.isBefore(now)
+            if (stateUpdatedAt.isBefore(lastCollectionDate) && lastCollectionDate.isBefore(now)) {
+                state = BIN_OUT_COLLECTED
+            }
+            return state == BIN_OUT_COLLECTED
         }
         return false
     }
@@ -143,24 +118,27 @@ data class Bin(
 
     fun putOutAt(now: LocalDateTime) {
         if (!isPutOut()) {
-            putOutDate = now
+            stateUpdatedAt = now
+            state = BIN_OUT_UNCOLLECTED
         }
     }
 
     fun bringInAt(now: LocalDateTime) {
         if (now.isAfter(lastCollectionDate)) {
-            putOutDate = null
+            stateUpdatedAt = now
+            state = BIN_INSIDE
             determineNextCollectionDate(now)
         }
     }
 
     fun getWhenCollectionStr(now: LocalDateTime): String? {
         val hours = hoursTillCollection(now)
+        // Same day as the collection (but before it)
         if (hours <= nextCollectionDate.hour)
-            return "TODAY"
-        // 24
+            return COLLECT_TIME_TODAY
+        // Less than 24 hours to go
         else if (hours <= HOURS_IMMINENT_COLLECTION)
-            return "TOMORROW"
+            return COLLECT_TIME_TOMORROW
 
         return null
     }
@@ -176,18 +154,4 @@ data class Bin(
     fun getNextCollectionDateStr(): String {
         return formatDate(nextCollectionDate, "EEEE, dd MMMM yyyy HH:mm")
     }
-
-//    fun toStoredBin(): StoredBin {
-//        return StoredBin(
-//            name = this.name,
-//            colorPrimary = this.colors.primary.value.toLong(),
-//            colorLight = this.colors.light.value.toLong(),
-//            colorDark = this.colors.dark.value.toLong(),
-//            firstCollectionDate = this.firstCollectionDate,
-//            daysBetweenCollections = this.daysBetweenCollections,
-//            lastPutOutDate
-//            nextCollectionDate = this.nextCollectionDate,
-//            iconResStr = this.iconResStr
-//        )
-//    }
 }

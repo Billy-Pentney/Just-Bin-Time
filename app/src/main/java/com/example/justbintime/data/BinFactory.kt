@@ -23,7 +23,7 @@ class BinFactory {
         return Bin(
             name = "Landfill",
             colors = BinColours(BinLandfillColor, BinLandfillColorLight, BinLandfillColorDark),
-            firstCollectionDate = LocalDateTime.parse(origLandfillCollectDate),
+            lastCollectionDate = LocalDateTime.parse(origLandfillCollectDate),
             iconResStr = "bin_landfill"
         )
     }
@@ -32,7 +32,7 @@ class BinFactory {
         return Bin (
             name = "Recycling",
             colors = BinColours(BinRecyclingColor, BinRecyclingColorLight, BinRecyclingColorDark),
-            firstCollectionDate = LocalDateTime.parse(origRecyclingCollectDate),
+            lastCollectionDate = LocalDateTime.parse(origRecyclingCollectDate),
             iconResStr = "bin_recycle"
         )
     }
@@ -41,7 +41,7 @@ class BinFactory {
         return Bin(
             name = "Garden",
             colors = BinColours(BinGardenColor, BinGardenColorLight, BinGardenColorDark),
-            firstCollectionDate = LocalDateTime.parse(origGardenCollectDate),
+            lastCollectionDate = LocalDateTime.parse(origGardenCollectDate),
             iconResStr = "bin_garden"
         )
     }
