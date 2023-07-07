@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -25,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -141,7 +141,15 @@ fun ViewBinScreen(viewModel: BinViewModel, navController: NavController) {
         Log.e("DisplayBins", "Attempt to display " + binUiState.bins.size)
         item {
             Spacer(modifier = Modifier.height(12.dp))
-            AddBinButton(navController)
+            Row (modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center) {
+                AddBinButton(navController)
+                Spacer(modifier=Modifier.width(4.dp))
+                // Add ability to restore the default three bins
+                if (!viewModel.initialisedBins) {
+                    AddDefaultBinsButton(viewModel)
+                }
+            }
             Spacer(modifier = Modifier.height(12.dp))
         }
     }
@@ -173,6 +181,7 @@ fun MainStatusText(binUiState: BinUiState, now: LocalDateTime) {
             fontSize = 18.sp,
             color = MaterialTheme.colors.onBackground
         )
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -327,16 +336,36 @@ fun AddBinButton(navController: NavController) {
     val bkgColor = if (isSystemInDarkTheme()) GreenPrimary100 else GreenPrimary900
     val frgColor = if (isSystemInDarkTheme()) GreenPrimary900 else GreenPrimary100
 
-    Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-        Button(
-            colors = ButtonDefaults.buttonColors(backgroundColor = bkgColor, contentColor = frgColor),
-            onClick = {
-                navController.navigate(BinScreen.AddBin.name)
-                Log.e("BinNavigation", "Navigated to AddBinScreen")
-            }
-        ) {
-            Text("Add a Bin")
-        }
+    Button(
+        colors = ButtonDefaults.buttonColors(backgroundColor = bkgColor, contentColor = frgColor),
+        shape = CircleShape,
+        onClick = {
+            navController.navigate(BinScreen.AddBin.name)
+            Log.e("BinNavigation", "Navigated to AddBinScreen")
+        },
+        modifier = Modifier.fillMaxHeight()
+    ) {
+        Icon(painterResource(id = R.drawable.icon_add), "Button to add a new Bin", tint = frgColor)
+        Spacer(Modifier.width(4.dp))
+        Text("ADD", fontSize = 16.sp)
+    }
+}
+
+@Composable
+fun AddDefaultBinsButton(viewModel: BinViewModel?) {
+    val bkgColor = if (isSystemInDarkTheme()) GreenPrimary100 else GreenPrimary900
+    val frgColor = if (isSystemInDarkTheme()) GreenPrimary900 else GreenPrimary100
+
+    Button(
+        colors = ButtonDefaults.buttonColors(backgroundColor = bkgColor, contentColor = frgColor),
+        shape = CircleShape,
+        onClick = {
+            viewModel?.initDefaultBins()
+        },
+        modifier = Modifier.fillMaxHeight()
+    ) {
+        Spacer(Modifier.width(4.dp))
+        Text("Restore Default", fontSize = 16.sp)
     }
 }
 
@@ -415,6 +444,7 @@ fun DefaultPreview() {
 
     JustBinTimeTheme {
         DisplayBin(viewModel = simViewModel, binOrig = BinFactory().makeLandfillBin(), now = LocalDateTime.now())
+        AddBinButton(navController = navController)
     }
 }
 
@@ -429,5 +459,17 @@ fun PreviewDark() {
 
     JustBinTimeTheme {
         DisplayBin(viewModel = simViewModel, binOrig = BinFactory().makeLandfillBin(), now = LocalDateTime.now())
+//        AddBinButton(navController = navController)
+//        Row(modifier = Modifier
+//            .padding(20.dp)
+//            .fillMaxWidth(),
+//            horizontalArrangement = Arrangement.Center
+//        ) {
+//            AddBinButton(navController)
+//            Button (onClick = { })
+//            { Text("example")}
+            // Add ability to restore the default three bins
+//            AddDefaultBinsButton(simViewModel)
+//        }
     }
 }

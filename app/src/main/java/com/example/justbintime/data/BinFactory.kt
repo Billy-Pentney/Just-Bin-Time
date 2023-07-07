@@ -14,7 +14,7 @@ import com.example.justbintime.ui.theme.BinRecyclingColorLight
 import java.time.LocalDateTime
 
 const val origLandfillCollectDate = "2023-06-13T09:00:00"
-const val origRecyclingCollectDate = "2023-07-20T09:00:00"
+const val origRecyclingCollectDate = "2023-06-20T09:00:00"
 const val origGardenCollectDate = "2023-06-20T09:00:00"
 
 class BinFactory {
@@ -22,7 +22,8 @@ class BinFactory {
     fun makeLandfillBin(): Bin {
         return Bin(
             name = "Landfill",
-            colors = BinColours(BinLandfillColor, BinLandfillColorLight, BinLandfillColorDark),
+            //            colors = BinColours(BinLandfillColor, BinLandfillColorLight, BinLandfillColorDark),
+            colors = BinColours(BinLandfillColor),
             lastCollectionDate = LocalDateTime.parse(origLandfillCollectDate),
             iconResStr = "bin_landfill"
         )
@@ -31,7 +32,8 @@ class BinFactory {
     fun makeRecyclingBin(): Bin {
         return Bin (
             name = "Recycling",
-            colors = BinColours(BinRecyclingColor, BinRecyclingColorLight, BinRecyclingColorDark),
+//            colors = BinColours(BinRecyclingColor, BinRecyclingColorLight, BinRecyclingColorDark),
+            colors = BinColours(BinRecyclingColor),
             lastCollectionDate = LocalDateTime.parse(origRecyclingCollectDate),
             iconResStr = "bin_recycle"
         )
@@ -40,7 +42,8 @@ class BinFactory {
     fun makeGardenBin(): Bin {
         return Bin(
             name = "Garden",
-            colors = BinColours(BinGardenColor, BinGardenColorLight, BinGardenColorDark),
+//            colors = BinColours(BinGardenColor, BinGardenColorLight, BinGardenColorDark),
+            colors = BinColours(BinGardenColor),
             lastCollectionDate = LocalDateTime.parse(origGardenCollectDate),
             iconResStr = "bin_garden"
         )

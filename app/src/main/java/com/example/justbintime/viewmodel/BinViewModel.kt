@@ -26,7 +26,6 @@ class BinViewModel(private val binRepo: BinRepository): ViewModel(), IModelBinUI
     fun addLiveDataObserver() {
         binsLive.observeForever { binList ->
             uiState.update {
-                initDefaultBins()
                 BinUiState(binList)
             }
         }
@@ -54,8 +53,8 @@ class BinViewModel(private val binRepo: BinRepository): ViewModel(), IModelBinUI
             deleteAllBins()
             val binFactory = BinFactory()
             addBin(binFactory.makeLandfillBin())
-//            addBin(binFactory.makeRecyclingBin())
-//            addBin(binFactory.makeGardenBin())
+            addBin(binFactory.makeRecyclingBin())
+            addBin(binFactory.makeGardenBin())
         }
     }
 }
