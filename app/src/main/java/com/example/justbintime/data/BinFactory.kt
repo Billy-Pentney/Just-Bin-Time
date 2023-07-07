@@ -1,16 +1,10 @@
 package com.example.justbintime.data
 
-import com.example.justbintime.BinUiState
-import com.example.justbintime.R
+import com.example.justbintime.data.`object`.Bin
+import com.example.justbintime.data.`object`.BinColours
 import com.example.justbintime.ui.theme.BinGardenColor
-import com.example.justbintime.ui.theme.BinGardenColorDark
-import com.example.justbintime.ui.theme.BinGardenColorLight
 import com.example.justbintime.ui.theme.BinLandfillColor
-import com.example.justbintime.ui.theme.BinLandfillColorDark
-import com.example.justbintime.ui.theme.BinLandfillColorLight
 import com.example.justbintime.ui.theme.BinRecyclingColor
-import com.example.justbintime.ui.theme.BinRecyclingColorDark
-import com.example.justbintime.ui.theme.BinRecyclingColorLight
 import java.time.LocalDateTime
 
 const val origLandfillCollectDate = "2023-06-13T09:00:00"
@@ -19,38 +13,38 @@ const val origGardenCollectDate = "2023-06-20T09:00:00"
 
 class BinFactory {
 
-    fun makeLandfillBin(): Bin {
-        return Bin(
+    fun makeLandfillBinWithColours(): BinWithColours {
+        val b = Bin(
             name = "Landfill",
-            //            colors = BinColours(BinLandfillColor, BinLandfillColorLight, BinLandfillColorDark),
-            colors = BinColours(BinLandfillColor),
             lastCollectionDate = LocalDateTime.parse(origLandfillCollectDate),
             iconResStr = "bin_landfill"
         )
+        val c = BinColours(BinLandfillColor)
+        return BinWithColours(b,c)
     }
 
-    fun makeRecyclingBin(): Bin {
-        return Bin (
+    fun makeRecyclingBinWithColours(): BinWithColours {
+        val b = Bin (
             name = "Recycling",
-//            colors = BinColours(BinRecyclingColor, BinRecyclingColorLight, BinRecyclingColorDark),
-            colors = BinColours(BinRecyclingColor),
             lastCollectionDate = LocalDateTime.parse(origRecyclingCollectDate),
             iconResStr = "bin_recycle"
         )
+        val c = BinColours(BinRecyclingColor)
+        return BinWithColours(b,c)
     }
 
-    fun makeGardenBin(): Bin {
-        return Bin(
+    fun makeGardenBinWithColours(): BinWithColours {
+        val b = Bin(
             name = "Garden",
-//            colors = BinColours(BinGardenColor, BinGardenColorLight, BinGardenColorDark),
-            colors = BinColours(BinGardenColor),
             lastCollectionDate = LocalDateTime.parse(origGardenCollectDate),
             iconResStr = "bin_garden"
         )
+        val c = BinColours(BinGardenColor)
+        return BinWithColours(b,c)
     }
 
     fun makeUiState(): BinUiState {
-        val bins = listOf(makeLandfillBin(), makeRecyclingBin(), makeGardenBin())
+        val bins = listOf(makeLandfillBinWithColours(), makeRecyclingBinWithColours(), makeGardenBinWithColours())
         return BinUiState(bins)
     }
 }

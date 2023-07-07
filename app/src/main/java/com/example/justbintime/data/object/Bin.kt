@@ -1,4 +1,4 @@
-package com.example.justbintime.data
+package com.example.justbintime.data.`object`
 
 import android.content.Context
 import androidx.room.ColumnInfo
@@ -11,9 +11,9 @@ import java.time.temporal.ChronoUnit
 
 @Entity(tableName="bins")
 data class Bin(
-    @PrimaryKey(autoGenerate=true) val id: Int = 0,
+    @PrimaryKey(autoGenerate=true) val binId: Int = 0,
     @ColumnInfo var name: String,
-    @ColumnInfo var colors: BinColours,
+    @ColumnInfo var binColoursId: Int = 0,
     @ColumnInfo var lastCollectionDate: LocalDateTime,
     @ColumnInfo var daysBetweenCollections: Int = DEFAULT_COLLECT_INTERVAL,
     @ColumnInfo var iconResStr: String? = null,

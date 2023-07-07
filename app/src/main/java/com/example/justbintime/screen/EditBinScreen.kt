@@ -1,20 +1,15 @@
-package com.example.justbintime
+package com.example.justbintime.screen
 
 import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Card
@@ -29,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,14 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.chargemap.compose.numberpicker.NumberPicker
-import com.example.justbintime.data.Bin
-import com.example.justbintime.data.BinColours
-import com.example.justbintime.data.BinColours.Companion.ALL_COLORS
-import com.example.justbintime.data.BinColours.Companion.GREEN
-import com.example.justbintime.data.BinColours.Companion.ORANGE
-import com.example.justbintime.data.BinColours.Companion.PURPLE
-import com.example.justbintime.data.BinColours.Companion.RED
-import com.example.justbintime.data.BinColours.Companion.YELLOW
+import com.example.justbintime.BinScreen
+import com.example.justbintime.data.`object`.BinColours
+import com.example.justbintime.data.`object`.BinColours.Companion.ALL_COLORS
+import com.example.justbintime.data.BinFactory
+import com.example.justbintime.data.BinWithColours
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.viewmodel.BinViewModel
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -58,20 +49,20 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?) {
+fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?, bwcOrig: BinWithColours) {
 
-    // Temporary; TODO - add ability to select the drawable used
-    val drawableRefStr = "bin_landfill"
+    val bwc by remember { mutableStateOf(bwcOrig) }
+    val drawableRefStr by remember { mutableStateOf(bwc.getIconResStr()) }
 
     val dateDialogState = rememberMaterialDialogState()
     val timeDialogState = rememberMaterialDialogState()
     val colorDialogState = rememberMaterialDialogState()
 
-    var titleText by remember { mutableStateOf("My Bin") }
-    var primaryColour by remember { mutableStateOf(ALL_COLORS[0]) }
-    var collectDate by remember { mutableStateOf(LocalDate.now()) }
-    var collectTime by remember { mutableStateOf(LocalTime.now()) }
-    var daysBetween by remember { mutableStateOf(Bin.DEFAULT_COLLECT_INTERVAL) }
+    var binNameStr by remember { mutableStateOf(bwc.getName()) }
+    var binPrimaryColour by remember { mutableStateOf(bwc.colours.colorPrimary) }
+    var binLastCollectDate by remember { mutableStateOf(bwc.getLastCollectionDate()) }
+    var binCollectTime by remember { mutableStateOf(bwc.getLastCollectionTime()) }
+    var binCollectInterval by remember { mutableStateOf(bwc.getCollectInterval()) }
 
     val lblTextSize = 14.sp
 
@@ -81,10 +72,12 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
             .padding(24.dp)
     ) {
         Text(
-            text = "Add a new Bin",
+            text = "Edit Bin",
             fontSize = 24.sp,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp, horizontal = 24.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 40.dp, horizontal = 24.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -99,8 +92,8 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
             ) {
                 // Bin Name Text Input
                 TextField(
-                    value = titleText,
-                    onValueChange = { titleText = it },
+                    value = binNameStr,
+                    onValueChange = { binNameStr = it },
                     label = { Text("Bin Name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -117,7 +110,7 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
                         fontSize = 16.sp,
                         modifier = Modifier.align(Alignment.CenterVertically),
                     )
-                    BinColourBlobs(BinColours(primaryColour))
+                    BinColourBlobs(BinColours(binPrimaryColour))
                     // Preview the chosen color, and click to edit
                     Button(
                         onClick = { colorDialogState.show() }
@@ -143,7 +136,7 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
                 ) {
                     Text("Last collected on:", fontSize = lblTextSize)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(collectDate.format(dateFormatter), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                    Text(binLastCollectDate.format(dateFormatter), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(4.dp))
                     Button (onClick = { dateDialogState.show() }) {
                         Text("Change Date")
@@ -163,7 +156,7 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
                     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
                     Text("Last collected at:", fontSize = lblTextSize)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(collectTime.format(timeFormatter), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                    Text(binCollectTime.format(timeFormatter), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     // Opens Time of First Collection Dialog
 //                        IconButton(onClick = { dateDialogState.show() }) {
 //                            Icon(
@@ -199,9 +192,9 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
                     Row {
                         // Days between collections (number only)
                         NumberPicker(
-                            value = daysBetween,
+                            value = binCollectInterval,
                             range = 1..100,
-                            onValueChange = { daysBetween = it }
+                            onValueChange = { binCollectInterval = it }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -220,11 +213,15 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
         Button(
             content = { Text("Save") },
             onClick = {
-                val collectAt = LocalDateTime.of(collectDate, collectTime)
-                // Make a new bin with the given data
-                val bin = Bin(0, titleText, BinColours(primaryColour),
-                                collectAt, daysBetween, drawableRefStr)
-                viewModel?.addBin(bin)
+                val collectAt = LocalDateTime.of(binLastCollectDate, binCollectTime)
+                val bin = bwc.bin
+                // Update the given bin with the details supplied
+                bin.lastCollectionDate = collectAt
+                if (binPrimaryColour != bwc.colours.colorPrimary)
+                    bwc.updateColours(BinColours(binPrimaryColour))
+                bin.name = binNameStr
+                bin.iconResStr = drawableRefStr
+                viewModel?.updateBin(bwc)
                 navHostController?.navigate(BinScreen.ViewBins.name)
                 Log.e("BinNavigation", "Navigated back to ViewBinsScreen")
             },
@@ -241,13 +238,13 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
     ) {
         datepicker(
             initialDate = LocalDate.now(),
-            title = "Pick collection date for $titleText",
+            title = "Pick collection date for $binNameStr",
             // Only allow dates not in the future
             allowedDateValidator = {
                 !it.isAfter(LocalDate.now())
             }
         ) {
-            collectDate = it
+            binLastCollectDate = it
         }
     }
 
@@ -260,10 +257,10 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
     ) {
         timepicker(
             initialTime = LocalTime.now(),
-            title = "Pick collection time for $titleText",
+            title = "Pick collection time for $binNameStr",
             is24HourClock = true
         ) {
-            collectTime = it
+            binCollectTime = it
         }
     }
 
@@ -277,45 +274,17 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
         colorChooser(
             colors = ALL_COLORS,
             initialSelection = 0
-        ) { primaryColour = it }
-    }
-}
-
-@Composable
-fun SingleColourBlob(color: Color) {
-    Surface (
-        shape = CircleShape,
-        modifier = Modifier
-            .width(30.dp)
-            .aspectRatio(1f),
-        border = BorderStroke(1.dp, Color.Black),
-        color = color
-    ) {}
-}
-
-@Composable
-fun BinColourBlobs(binColours: BinColours) {
-    Row (
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        SingleColourBlob(color = binColours.light)
-        SingleColourBlob(color = binColours.primary)
-        SingleColourBlob(color = binColours.dark)
+        ) { binPrimaryColour = it }
     }
 }
 
 @Preview
 @Composable
-fun PreviewAddBin() {
+fun PreviewEditBin() {
     JustBinTimeTheme (darkTheme = true) {
+        val bin = BinFactory().makeLandfillBinWithColours()
         Surface {
-            // Preview the available colour schemes
-//            LazyColumn {
-//                items (ALL_COLORS) {
-//                    col -> BinColourBlobs(BinColours(col))
-//                }
-//            }
-            AddBinScreen(null, null)
+            EditBinScreen(null, null, bin)
         }
     }
 }

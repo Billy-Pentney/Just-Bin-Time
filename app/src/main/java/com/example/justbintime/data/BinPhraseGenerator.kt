@@ -1,9 +1,7 @@
-package com.example.justbintime
+package com.example.justbintime.data
 
 import android.content.Context
-import android.content.res.Resources
-import com.example.justbintime.data.Bin
-import java.time.LocalDateTime
+import com.example.justbintime.R
 import kotlin.random.Random
 
 class BinPhraseGenerator {

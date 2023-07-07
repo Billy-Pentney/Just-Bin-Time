@@ -1,9 +1,8 @@
-package com.example.justbintime
+package com.example.justbintime.data
 
-import com.example.justbintime.data.Bin
 import java.time.LocalDateTime
 
-class BinUiState(var bins: List<Bin> = listOf()) {
+class BinUiState(var bwcList: List<BinWithColours> = listOf()) {
     var numBinsDue: Int = 0
     var binDuePhrase: String = "?"
 
@@ -12,15 +11,16 @@ class BinUiState(var bins: List<Bin> = listOf()) {
         return binDuePhrase
     }
 
-    fun getSortedBins(now: LocalDateTime): List<Bin> {
-        bins.sortedBy { b -> b.determineNextCollectionDate(now) }
-        return bins
+    fun getSortedBins(now: LocalDateTime): List<BinWithColours> {
+        bwcList.sortedBy { bwc -> bwc.bin.determineNextCollectionDate(now) }
+        return bwcList
     }
 
     // Count the number of bins which will be collected in the next 24 hours
     fun numBinsCollectedSoon(now: LocalDateTime): Int {
         var numBins = 0;
-        for (b in bins) {
+        for (bwc in bwcList) {
+            val b = bwc.bin
             b.determineNextCollectionDate(now)
             if (b.isCollectionImminent(now)) {
                 numBins += 1
