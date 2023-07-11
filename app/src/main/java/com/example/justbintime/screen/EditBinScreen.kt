@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -24,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,11 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.chargemap.compose.numberpicker.NumberPicker
-import com.example.justbintime.BinScreen
+import com.example.justbintime.R
 import com.example.justbintime.data.`object`.BinColours
 import com.example.justbintime.data.`object`.BinColours.Companion.ALL_COLORS
 import com.example.justbintime.data.BinFactory
-import com.example.justbintime.data.BinWithColours
+import com.example.justbintime.data.DisplayableBin
+import com.example.justbintime.data.`object`.BinIcon
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.viewmodel.BinViewModel
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -45,31 +49,31 @@ import com.vanpra.composematerialdialogs.datetime.time.timepicker
 import com.vanpra.composematerialdialogs.rememberMaterialDialogState
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?, bwcOrig: BinWithColours) {
+fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?, binOrig: DisplayableBin) {
 
-    val bwc by remember { mutableStateOf(bwcOrig) }
-    val drawableRefStr by remember { mutableStateOf(bwc.getIconResStr()) }
+    val binMut by remember { mutableStateOf(binOrig) }
+    val drawableRefStr by remember { mutableStateOf(binMut.getIconResStr()) }
 
     val dateDialogState = rememberMaterialDialogState()
     val timeDialogState = rememberMaterialDialogState()
     val colorDialogState = rememberMaterialDialogState()
 
-    var binNameStr by remember { mutableStateOf(bwc.getName()) }
-    var binPrimaryColour by remember { mutableStateOf(bwc.colours.colorPrimary) }
-    var binLastCollectDate by remember { mutableStateOf(bwc.getLastCollectionDate()) }
-    var binCollectTime by remember { mutableStateOf(bwc.getLastCollectionTime()) }
-    var binCollectInterval by remember { mutableStateOf(bwc.getCollectInterval()) }
+    var binNameStr by remember { mutableStateOf(binMut.getName()) }
+    var binPrimaryColour by remember { mutableStateOf(binMut.colours.colorPrimary) }
+    var binLastCollectDate by remember { mutableStateOf(binMut.getLastCollectionDate()) }
+    var binCollectTime by remember { mutableStateOf(binMut.getLastCollectionTime()) }
+    var binCollectIntervalDays by remember { mutableStateOf(binMut.getCollectInterval()) }
 
     val lblTextSize = 14.sp
 
-    Column(
+    Column (
         modifier = Modifier
             .fillMaxHeight()
-            .padding(24.dp)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "Edit Bin",
@@ -80,7 +84,18 @@ fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController
                 .padding(vertical = 40.dp, horizontal = 24.dp)
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Button (
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
+            onClick = {
+                viewModel?.deleteBin(binMut)
+                navHostController?.navigateUp()
+            }
+        ) {
+            Text("Delete")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
 
         Card (
             backgroundColor = MaterialTheme.colors.secondary,
@@ -175,6 +190,10 @@ fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController
 
         Spacer(Modifier.height(8.dp))
 
+        val resources = LocalContext.current.resources
+        val collectIntervalLbl = resources.getString(R.string.label_bin_collected_interval_days)
+        val daysLbl = resources.getString(R.string.label_day_days)
+
         Card (backgroundColor = MaterialTheme.colors.secondary,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
@@ -185,20 +204,20 @@ fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        "This bin is collected every...",
+                        collectIntervalLbl,
                         fontSize = 16.sp,
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
                     Row {
                         // Days between collections (number only)
                         NumberPicker(
-                            value = binCollectInterval,
+                            value = binCollectIntervalDays,
                             range = 1..100,
-                            onValueChange = { binCollectInterval = it }
+                            onValueChange = { binCollectIntervalDays = it }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "day(s)",
+                            daysLbl,
                             fontSize = lblTextSize,
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
@@ -207,6 +226,20 @@ fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController
             }
         }
 
+        // Choose Bin Icon...
+//        val context = LocalContext.current
+//        val iconResStrs = context.resources.getStringArray(R.array.BinDrawableIcons).toList()
+//        val iconDrawables = iconResStrs.map {
+//            val resId = context.resources.getIdentifier(it, "drawable", context.packageName)
+//            Image(painterResource(id = resId), contentDescription = null)
+//        }
+//
+//        ListItemPicker(
+//            value = iconDrawables[0],
+//            onValueChange = { },
+//            list = iconDrawables
+//        )
+
         Spacer(Modifier.height(60.dp))
 
         // Save Button
@@ -214,15 +247,29 @@ fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController
             content = { Text("Save") },
             onClick = {
                 val collectAt = LocalDateTime.of(binLastCollectDate, binCollectTime)
-                val bin = bwc.bin
-                // Update the given bin with the details supplied
-                bin.lastCollectionDate = collectAt
-                if (binPrimaryColour != bwc.colours.colorPrimary)
-                    bwc.updateColours(BinColours(binPrimaryColour))
-                bin.name = binNameStr
-                bin.iconResStr = drawableRefStr
-                viewModel?.updateBin(bwc)
-                navHostController?.navigate(BinScreen.ViewBins.name)
+                // Make a new bin, updating the properties according to the form
+                val bin = binMut.bin.copy(
+                    name = binNameStr,
+                    daysBetweenCollections = binCollectIntervalDays
+                )
+                bin.daysBetweenCollections = binCollectIntervalDays
+                // Update the collection date (and importantly, recalculate nextCollectionDate)
+                bin.setCollectionDate(collectAt)
+
+                // If the colour has changed, make a new colour scheme
+                var colours = binMut.colours
+                if (binPrimaryColour != binMut.colours.colorPrimary)
+                    colours = BinColours(binPrimaryColour)
+
+                var icon = binMut.icon
+                if (drawableRefStr != binMut.getIconResStr())
+                    icon = BinIcon(0, drawableRefStr)
+
+                // Push changes to the repo
+                val newDispBin = DisplayableBin(bin, colours, icon)
+                viewModel?.updateBin(newDispBin)
+                
+                navHostController?.navigateUp()
                 Log.e("BinNavigation", "Navigated back to ViewBinsScreen")
             },
             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -237,8 +284,8 @@ fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController
         }
     ) {
         datepicker(
-            initialDate = LocalDate.now(),
-            title = "Pick collection date for $binNameStr",
+            initialDate = binLastCollectDate,
+            title = "Pick collection date for \"$binNameStr\"",
             // Only allow dates not in the future
             allowedDateValidator = {
                 !it.isAfter(LocalDate.now())
@@ -256,8 +303,8 @@ fun EditBinScreen(viewModel: BinViewModel?, navHostController: NavHostController
         }
     ) {
         timepicker(
-            initialTime = LocalTime.now(),
-            title = "Pick collection time for $binNameStr",
+            initialTime = binCollectTime,
+            title = "Pick collection time for \"$binNameStr\"",
             is24HourClock = true
         ) {
             binCollectTime = it

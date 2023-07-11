@@ -50,7 +50,7 @@ import com.example.justbintime.BinScreen
 import com.example.justbintime.data.BinUiState
 import com.example.justbintime.R
 import com.example.justbintime.data.`object`.Bin
-import com.example.justbintime.data.BinWithColours
+import com.example.justbintime.data.DisplayableBin
 import com.example.justbintime.ui.theme.AmberWarning
 import com.example.justbintime.ui.theme.AmberWarningDark
 import com.example.justbintime.ui.theme.GreenPrimary100
@@ -130,18 +130,13 @@ fun MainStatusText(binUiState: BinUiState, now: LocalDateTime) {
 
 
 @Composable
-fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwcOrig: BinWithColours) {
+fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwc: DisplayableBin) {
     val now by remember { mutableStateOf(LocalDateTime.now()) }
-    val bwc by remember { mutableStateOf(bwcOrig) }
 
     val statusText = bwc.getStatusText(now)
     val actionText = bwc.getActionText(now)
 
-    if (bwc.hasBeenCollected(now)) {
-        bwc.determineNextCollectionDate(now)
-    }
-
-    val nextCollectionDateStr = bwc.getNextCollectionDateStr()
+    val nextCollectionDateStr = bwc.getNextCollectionDateStr(now)
 
     val darkTheme = isSystemInDarkTheme()
     val colors = bwc.colours
@@ -163,7 +158,6 @@ fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwcOrig: Bin
                     .fillMaxWidth()
             ) {
                 Row(
-                    //                horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(35.dp)
@@ -314,7 +308,7 @@ fun AddDefaultBinsButton(viewModel: BinViewModel?) {
 
 
 @Composable
-fun WarningForCollection(bwc: BinWithColours, darkTheme: Boolean) {
+fun WarningForCollection(bwc: DisplayableBin, darkTheme: Boolean) {
 
     val timeOfCollectionStr = bwc.getWhenCollectionStr(LocalDateTime.now())
 

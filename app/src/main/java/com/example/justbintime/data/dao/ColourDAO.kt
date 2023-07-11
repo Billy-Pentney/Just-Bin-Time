@@ -8,13 +8,13 @@ import com.example.justbintime.data.`object`.BinColours
 
 @Dao
 interface ColourDao {
-    @Query("SELECT * FROM bincolours")
+    @Query("SELECT * FROM bin_colours")
     fun getAll(): List<BinColours>
 
-    @Query("SELECT * FROM bincolours WHERE bcId = :id")
+    @Query("SELECT * FROM bin_colours WHERE bcId = :id")
     fun getById(id: Int): List<BinColours>
 
-    @Query("SELECT * FROM bincolours WHERE cPrimary = :colour")
+    @Query("SELECT * FROM bin_colours WHERE cPrimary = :colour")
     fun getByPrimary(colour: Long): List<BinColours>
 
     @Delete
@@ -23,6 +23,6 @@ interface ColourDao {
     @Upsert
     fun upsert(vararg cols: BinColours)
 
-    @Query("DELETE FROM bincolours")
+    @Query("DELETE FROM bin_colours")
     fun deleteAll()
 }

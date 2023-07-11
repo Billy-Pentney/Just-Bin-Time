@@ -8,7 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
 import com.example.justbintime.data.`object`.Bin
-import com.example.justbintime.data.BinWithColours
+import com.example.justbintime.data.DisplayableBin
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -40,11 +40,11 @@ interface BinDao {
 
     @Transaction
     @Query("SELECT * FROM bins")
-    fun getBinsWithColours(): List<BinWithColours>
+    fun getBinsWithColours(): List<DisplayableBin>
 
     @Transaction
     @Query("SELECT * FROM bins")
-    fun observeAllWithColours(): Flow<List<BinWithColours>>
+    fun observeAllWithColours(): Flow<List<DisplayableBin>>
 
     @Upsert
     fun upsert(vararg bin: Bin)

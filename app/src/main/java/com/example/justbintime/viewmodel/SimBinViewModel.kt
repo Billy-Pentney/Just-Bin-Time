@@ -1,7 +1,7 @@
 package com.example.justbintime.viewmodel
 
 import com.example.justbintime.data.BinUiState
-import com.example.justbintime.data.BinWithColours
+import com.example.justbintime.data.DisplayableBin
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,17 +12,17 @@ class SimBinViewModel(private val binUiState: BinUiState): IBinHolder {
     override fun getUiState(): StateFlow<BinUiState> {
         return MutableStateFlow(binUiState)
     }
-    override fun updateBin(bwc: BinWithColours): Job {
+    override fun updateBin(dispBin: DisplayableBin): Job {
         return Job()
     }
 
-    override fun setVisibleBin(bwc: BinWithColours) {
+    override fun setVisibleBin(dispBin: DisplayableBin) {
         return
     }
-    override fun getVisibleBin(): BinWithColours? {
+    override fun getVisibleBin(): DisplayableBin? {
         return null
     }
-//    override fun addBin(bin: Bin): Job {
+//    override fun addBin(dispBin: Bin): Job {
 //        return Job()
 //    }
 }

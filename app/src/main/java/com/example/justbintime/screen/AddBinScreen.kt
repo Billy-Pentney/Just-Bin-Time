@@ -35,11 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.chargemap.compose.numberpicker.NumberPicker
-import com.example.justbintime.BinScreen
 import com.example.justbintime.data.`object`.Bin
 import com.example.justbintime.data.`object`.BinColours
 import com.example.justbintime.data.`object`.BinColours.Companion.ALL_COLORS
-import com.example.justbintime.data.BinWithColours
+import com.example.justbintime.data.DisplayableBin
+import com.example.justbintime.data.`object`.BinIcon
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.viewmodel.BinViewModel
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -217,9 +217,9 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
             onClick = {
                 val collectAt = LocalDateTime.of(collectDate, collectTime)
                 // Make a new bin with the given data
-                val bin = Bin(0, titleText, 0, collectAt, daysBetween, drawableRefStr)
-                val bwc = BinWithColours(bin, BinColours(primaryColour))
-                viewModel?.addBin(bwc)
+                val bin = Bin(0, titleText, 0, collectAt, daysBetween)
+                val dispBin = DisplayableBin(bin, BinColours(primaryColour), BinIcon(0, BinIcon.GENERIC_RES))
+                viewModel?.addBin(dispBin)
                 navHostController?.navigateUp()
                 Log.e("BinNavigation", "Navigated back to ViewBinsScreen")
             },

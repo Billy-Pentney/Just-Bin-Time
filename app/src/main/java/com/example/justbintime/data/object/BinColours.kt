@@ -6,7 +6,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "bincolours")
+@Entity(tableName = "bin_colours")
 data class BinColours(
     @PrimaryKey(autoGenerate = true) var bcId: Int,
     @ColumnInfo var cPrimary: Long = Color.Gray.value.toLong(),

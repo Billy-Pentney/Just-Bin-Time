@@ -1,6 +1,7 @@
 package com.example.justbintime.data
 
 import android.content.Context
+import android.util.Log
 import com.example.justbintime.R
 import kotlin.random.Random
 
@@ -16,6 +17,7 @@ class BinPhraseGenerator {
 
         private fun pickRandomPhraseFromArray(arr: Array<String>?): String {
             return if (arr.isNullOrEmpty()) {
+                Log.e("BinPhraseGenerator", "Attempt to get phrase from null/empty array")
                 "??"
             } else {
                 arr[Random.nextInt(arr.size)]

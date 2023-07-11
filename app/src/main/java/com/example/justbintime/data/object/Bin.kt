@@ -16,7 +16,7 @@ data class Bin(
     @ColumnInfo var binColoursId: Int = 0,
     @ColumnInfo var lastCollectionDate: LocalDateTime,
     @ColumnInfo var daysBetweenCollections: Int = DEFAULT_COLLECT_INTERVAL,
-    @ColumnInfo var iconResStr: String? = null,
+    @ColumnInfo var binIconId: Int = 0
 ) {
     companion object {
         // Maximum number of hours till collection before the warning sign is displayed for a bin
@@ -70,15 +70,6 @@ data class Bin(
             isCollectionImminent(now) && !isPutOut() -> "I've put the bin out!"
             isPutOut()                               -> "I've brought the bin in!"
             else                                     -> null
-        }
-    }
-
-    fun getIconId(context: Context): Int? {
-        return try {
-            // Attempt to retrieve the resource ID for this bin's icon
-            context.resources.getIdentifier(iconResStr, "drawable", context.packageName)
-        } catch (ex: RuntimeException) {
-            null
         }
     }
 
@@ -153,5 +144,11 @@ data class Bin(
 
     fun getNextCollectionDateStr(): String {
         return formatDate(nextCollectionDate, "EEEE, dd MMMM yyyy HH:mm")
+    }
+
+    fun setCollectionDate(collectAt: LocalDateTime) {
+        lastCollectionDate = collectAt
+        nextCollectionDate = collectAt
+        determineNextCollectionDate(LocalDateTime.now())
     }
 }
