@@ -26,4 +26,7 @@
 
     <string name="label_day_days">day(s)</string>
     <string name="label_bin_collected_interval_days">This bin is collected every…</string>
+
+
+    <string name="content_desc_icon_landfill">Recycling Icon showing three arrows pointing at each </string>
 </resources>

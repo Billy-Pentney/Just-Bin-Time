@@ -87,11 +87,11 @@ fun ViewBinScreen(viewModel: BinViewModel, navController: NavController) {
             Row (modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center) {
                 AddBinButton(navController)
-                Spacer(modifier= Modifier.width(4.dp))
-                // Add ability to restore the default three bins
-                if (!viewModel.initialisedBins) {
-                    AddDefaultBinsButton(viewModel)
-                }
+//                Spacer(modifier= Modifier.width(4.dp))
+//                // Add ability to restore the default three bins
+//                if (!viewModel.initialisedBins) {
+//                    AddDefaultBinsButton(viewModel)
+//                }
             }
             Spacer(modifier = Modifier.height(12.dp))
         }

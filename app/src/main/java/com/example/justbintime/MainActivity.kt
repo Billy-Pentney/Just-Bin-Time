@@ -23,6 +23,7 @@ import com.example.justbintime.screen.AddBinButton
 import com.example.justbintime.screen.AddBinScreen
 import com.example.justbintime.screen.DisplayBin
 import com.example.justbintime.screen.EditBinScreen
+import com.example.justbintime.screen.ModifyBinScreen
 import com.example.justbintime.screen.ViewBinScreen
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.viewmodel.BinViewModel
@@ -64,7 +65,7 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(route = BinScreen.EditBin.name) {
                                 val bin = viewModel.getVisibleBin()
-                                bin?.let { b -> EditBinScreen(viewModel, nhc, b) }
+                                bin?.let { EditBinScreen(viewModel, nhc, it) }
                             }
                         }
                     }

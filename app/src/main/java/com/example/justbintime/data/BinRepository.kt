@@ -21,12 +21,10 @@ class BinRepository(
     @WorkerThread
     suspend fun addBin(dbin: DisplayableBin) {
         iconDao.upsert(dbin.icon)
-        val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
-        dbin.bin.binIconId = icon.iconId
-
         colourDao.upsert(dbin.colours)
-
+        val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
         val retrievedColours = colourDao.getByPrimary(dbin.colours.cPrimary).first()
+        dbin.bin.binIconId = icon.iconId
         dbin.bin.binColoursId = retrievedColours.bcId
 
         binDao.upsert(dbin.bin)
@@ -34,7 +32,7 @@ class BinRepository(
     }
 
     @WorkerThread
-    suspend fun updateBin(dbin: DisplayableBin) {
+    suspend fun upsertBin(dbin: DisplayableBin) {
         iconDao.upsert(dbin.icon)
         colourDao.upsert(dbin.colours)
 

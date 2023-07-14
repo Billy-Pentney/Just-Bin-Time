@@ -31,6 +31,10 @@ data class Bin(
         const val BIN_INSIDE: Int = 0
         const val BIN_OUT_UNCOLLECTED: Int = 1
         const val BIN_OUT_COLLECTED: Int = 2
+
+        fun makeDefault(): Bin {
+            return Bin (0, "My Bin", 0, LocalDateTime.now())
+        }
     }
 
     @ColumnInfo var nextCollectionDate: LocalDateTime = lastCollectionDate.plusDays(daysBetweenCollections.toLong())

@@ -40,8 +40,10 @@ class BinViewModel(private val binRepo: BinRepository): ViewModel(), IBinHolder 
         return uiState
     }
 
-    override fun updateBin(dispBin: DisplayableBin) = viewModelScope.launch(Dispatchers.IO) {
-        binRepo.updateBin(dispBin)
+    override fun updateBin(dispBin: DisplayableBin) = upsertBin(dispBin)
+
+    fun upsertBin(dispBin: DisplayableBin) = viewModelScope.launch(Dispatchers.IO) {
+        binRepo.upsertBin(dispBin)
     }
 
     fun addBin(dispBin: DisplayableBin) = viewModelScope.launch(Dispatchers.IO) {
