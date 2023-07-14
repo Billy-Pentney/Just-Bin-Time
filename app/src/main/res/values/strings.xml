@@ -24,14 +24,6 @@
         <item>:)</item>
     </string-array>
 
-    <string-array name="BinDrawableIcons">
-        <item>bin_general</item>
-        <item>bin_recycling</item>
-        <item>bin_garden</item>
-        <item>bin_medical</item>
-        <item>bin_industrial</item>
-    </string-array>
-
     <string name="label_day_days">day(s)</string>
     <string name="label_bin_collected_interval_days">This bin is collected every…</string>
 </resources>

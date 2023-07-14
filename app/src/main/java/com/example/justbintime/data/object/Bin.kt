@@ -16,7 +16,8 @@ data class Bin(
     @ColumnInfo var binColoursId: Int = 0,
     @ColumnInfo var lastCollectionDate: LocalDateTime,
     @ColumnInfo var daysBetweenCollections: Int = DEFAULT_COLLECT_INTERVAL,
-    @ColumnInfo var binIconId: Int = 0
+    @ColumnInfo var binIconId: Int = 0,
+    @ColumnInfo val isDefault: Boolean = false
 ) {
     companion object {
         // Maximum number of hours till collection before the warning sign is displayed for a bin

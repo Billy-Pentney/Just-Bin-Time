@@ -2,6 +2,7 @@ package com.example.justbintime.screen
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -112,7 +113,7 @@ fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?
                         fontSize = 16.sp,
                         modifier = Modifier.align(Alignment.CenterVertically),
                     )
-                    BinColourBlobs(BinColours(primaryColour))
+                    BinColourBlobs(BinColours(primaryColour)) {}
                     // Preview the chosen color, and click to edit
                     Button(
                         onClick = { colorDialogState.show() }
@@ -289,9 +290,10 @@ fun SingleColourBlob(color: Color) {
 }
 
 @Composable
-fun BinColourBlobs(binColours: BinColours) {
+fun BinColourBlobs(binColours: BinColours, onClick: () -> Unit) {
     Row (
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable { onClick.invoke() }
     ) {
         SingleColourBlob(color = binColours.colorLight)
         SingleColourBlob(color = binColours.colorPrimary)

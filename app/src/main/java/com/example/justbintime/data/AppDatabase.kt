@@ -19,7 +19,7 @@ import com.example.justbintime.ui.theme.BinRecyclingColor
 import java.util.concurrent.Executors
 
 
-@Database(entities = [Bin::class, BinColours::class, BinIcon::class], version = 10, exportSchema = true)
+@Database(entities = [Bin::class, BinColours::class, BinIcon::class], version = 11, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun binDao(): BinDao

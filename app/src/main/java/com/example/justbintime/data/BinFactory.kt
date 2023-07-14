@@ -3,9 +3,6 @@ package com.example.justbintime.data
 import com.example.justbintime.data.`object`.Bin
 import com.example.justbintime.data.`object`.BinColours
 import com.example.justbintime.data.`object`.BinIcon
-import com.example.justbintime.data.`object`.BinIcon.Companion.GARDEN_RES
-import com.example.justbintime.data.`object`.BinIcon.Companion.LANDFILL_RES
-import com.example.justbintime.data.`object`.BinIcon.Companion.RECYCLING_RES
 import com.example.justbintime.ui.theme.BinGardenColor
 import com.example.justbintime.ui.theme.BinLandfillColor
 import com.example.justbintime.ui.theme.BinRecyclingColor
@@ -24,6 +21,7 @@ class BinFactory {
         return Bin (
             name = "Landfill",
             lastCollectionDate = LocalDateTime.parse(origLandfillCollectDate),
+            isDefault = true
         )
     }
 
@@ -31,6 +29,7 @@ class BinFactory {
         return Bin (
             name = "Recycling",
             lastCollectionDate = LocalDateTime.parse(origRecyclingCollectDate),
+            isDefault = true
         )
     }
 
@@ -38,6 +37,7 @@ class BinFactory {
         return Bin (
             name = "Garden",
             lastCollectionDate = LocalDateTime.parse(origGardenCollectDate),
+            isDefault = true
         )
     }
 
@@ -45,7 +45,7 @@ class BinFactory {
         return DisplayableBin(
             makeLandfillBin(),
             BinColours(BinLandfillColor),
-            BinIcon(drawableResStr = LANDFILL_RES)
+            BinIcon(drawableResStr = BinIcon.LANDFILL_RES, drawableName = "Landfill")
         )
     }
 
@@ -53,7 +53,7 @@ class BinFactory {
         return DisplayableBin(
             makeRecyclingBin(),
             BinColours(BinRecyclingColor),
-            BinIcon(drawableResStr = RECYCLING_RES)
+            BinIcon(drawableResStr = BinIcon.RECYCLING_RES, drawableName = "Recycling")
         )
     }
 
@@ -61,7 +61,7 @@ class BinFactory {
         return DisplayableBin(
             makeGardenBin(),
             BinColours(BinGardenColor),
-            BinIcon(drawableResStr = GARDEN_RES)
+            BinIcon(drawableResStr = BinIcon.GARDEN_RES, drawableName = "Garden")
         )
     }
 
@@ -76,12 +76,12 @@ class BinFactory {
     }
 
     fun makeIcons(): List<BinIcon> {
-        val genericIcon = BinIcon(drawableResStr = BinIcon.GENERIC_RES)
-        val landfillIcon = BinIcon(drawableResStr = BinIcon.LANDFILL_RES)
-        val recyclingIcon = BinIcon(drawableResStr = BinIcon.RECYCLING_RES)
-        val gardenIcon = BinIcon(drawableResStr = BinIcon.GARDEN_RES)
-        val medicalIcon = BinIcon(drawableResStr = BinIcon.MEDICAL_RES)
-        val industrialIcon = BinIcon(drawableResStr = BinIcon.INDUSTRIAL_RES)
+        val genericIcon = BinIcon(drawableResStr = BinIcon.GENERIC_RES, drawableName = "General")
+        val landfillIcon = BinIcon(drawableResStr = BinIcon.LANDFILL_RES, drawableName = "Landfill")
+        val recyclingIcon = BinIcon(drawableResStr = BinIcon.RECYCLING_RES, drawableName = "Recycling")
+        val gardenIcon = BinIcon(drawableResStr = BinIcon.GARDEN_RES, drawableName = "Garden")
+        val medicalIcon = BinIcon(drawableResStr = BinIcon.MEDICAL_RES, drawableName = "Medical")
+        val industrialIcon = BinIcon(drawableResStr = BinIcon.INDUSTRIAL_RES, drawableName = "Industrial")
 
         return listOf(
             genericIcon, landfillIcon, recyclingIcon,

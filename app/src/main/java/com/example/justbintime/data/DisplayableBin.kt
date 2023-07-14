@@ -16,15 +16,9 @@ import java.time.LocalTime
 
 data class DisplayableBin(
     @Embedded val bin: Bin,
-    @Relation(
-        parentColumn = "binColoursId",
-        entityColumn = "bcId"
-    )
+    @Relation(parentColumn = "binColoursId", entityColumn = "bcId")
     val colours: BinColours,
-    @Relation(
-        parentColumn = "binIconId",
-        entityColumn = "iconId"
-    )
+    @Relation(parentColumn = "binIconId", entityColumn = "iconId")
     val icon: BinIcon
 ) {
     fun getName(): String {
@@ -32,14 +26,7 @@ data class DisplayableBin(
     }
 
     fun getIconId(context: Context): Int? {
-        return try {
-            // Attempt to retrieve the resource ID for this bin's icon
-            Log.e("DisplayableBin", "Try to load resource with string \"${icon.drawableResStr}\"")
-            context.resources.getIdentifier(icon.drawableResStr, "drawable", context.packageName)
-        } catch (ex: Resources.NotFoundException) {
-            Log.e("DisplayableBin", "Cannot load resource with string \"${icon.drawableResStr}\"")
-            null
-        }
+        return icon.getIconId(context)
     }
 
     fun getStatusText(now: LocalDateTime): String {

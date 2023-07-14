@@ -16,26 +16,17 @@ class BinRepository(
     private val iconDao: IconDao
 ) {
     val allDisplayableBins: Flow<List<DisplayableBin>> = binDao.observeAllWithColours()
-    private val iconResourceMapLive: LiveData<Map<String, Int>> = iconDao.observeMapByDrawableStr()
+//    private val iconResourceMapLive: LiveData<Map<String, Int>> = iconDao.observeMapByDrawableStr()
 
     @WorkerThread
     suspend fun addBin(dbin: DisplayableBin) {
-//        val iconResourceMap = iconResourceMapLive.value
-//
-//        if (iconResourceMap != null && iconResourceMap.containsKey(dbin.icon.drawableResStr)) {
-//            dbin.bin.binIconId = iconResourceMap[dbin.icon.drawableResStr]!!
-//        }
-//        else {
-            iconDao.upsert(dbin.icon)
-            val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
-            dbin.bin.binIconId = icon.iconId
-//        }
+        iconDao.upsert(dbin.icon)
+        val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
+        dbin.bin.binIconId = icon.iconId
 
         colourDao.upsert(dbin.colours)
 
         val retrievedColours = colourDao.getByPrimary(dbin.colours.cPrimary).first()
-//        Log.d("BinRepository", "Added colour \"${retrievedColours.bcId}\" successfully")
-
         dbin.bin.binColoursId = retrievedColours.bcId
 
         binDao.upsert(dbin.bin)
@@ -49,7 +40,6 @@ class BinRepository(
 
         // Now get the ID of the colour scheme (so we can create the association from bin to colours)
         val retrievedColours = colourDao.getByPrimary(dbin.colours.cPrimary).first()
-//        Log.d("BinRepository", "Updated colour \"${retrievedColours.bcId}\" successfully")
         val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
 
         dbin.bin.binColoursId = retrievedColours.bcId
