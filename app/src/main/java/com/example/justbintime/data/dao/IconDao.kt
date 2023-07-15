@@ -38,4 +38,7 @@ interface IconDao {
     @Upsert
     fun upsertAll(binIcons: List<BinIcon>)
 
+    @Query("SELECT * FROM bin_icons")
+    fun observeAll(): Flow<List<BinIcon>>
+
 }

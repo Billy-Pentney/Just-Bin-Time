@@ -20,7 +20,9 @@ interface BinDao {
     fun loadAllByIds(names: List<String>): List<Bin>
 
     @Insert
-    fun insertAll(vararg bin: Bin)
+    fun insert(vararg bin: Bin)
+    @Insert
+    fun insertMany(bins: List<Bin>)
 
     @Delete
     fun delete(bin: Bin)

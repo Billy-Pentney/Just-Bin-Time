@@ -14,20 +14,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.justbintime.data.BinUiState
 import com.example.justbintime.data.`object`.Bin
 import com.example.justbintime.data.`object`.BinColours
 import com.example.justbintime.data.DisplayableBin
-import com.example.justbintime.data.`object`.BinIcon
 import com.example.justbintime.ui.theme.JustBinTimeTheme
-import com.example.justbintime.viewmodel.BinViewModel
+import com.example.justbintime.viewmodel.IBinHolder
+import com.example.justbintime.viewmodel.SimBinViewModel
 
 @Composable
-fun AddBinScreen(viewModel: BinViewModel?, navHostController: NavHostController?) {
+fun AddBinScreen(viewModel: IBinHolder, navHostController: NavHostController?) {
 
     val defaultNewBin = Bin.makeDefault()
-    val primaryColour = BinColours.GRAY
+    val primaryColour = BinColours.GREY
+    val icon = viewModel.getIconForNewBin()
     // Make a new bin with the given data
-    val displayableBin = DisplayableBin(defaultNewBin, BinColours(primaryColour), BinIcon(0, BinIcon.GENERIC_RES))
+    val displayableBin = DisplayableBin(
+        defaultNewBin,
+        BinColours(primaryColour),
+        icon
+    )
 
     // Use the UI for editing an existing Bin
     ModifyBinScreen(viewModel, navHostController, displayableBin, BinModifyMode.MODE_ADD)
@@ -60,6 +66,8 @@ fun BinColourBlobs(binColours: BinColours, onClick: () -> Unit) {
 @Preview
 @Composable
 fun PreviewAddBin() {
+    val simBinViewModel = SimBinViewModel(BinUiState())
+
     JustBinTimeTheme (darkTheme = true) {
         Surface {
             // Preview the available colour schemes
@@ -68,7 +76,7 @@ fun PreviewAddBin() {
 //                    col -> BinColourBlobs(BinColours(col))
 //                }
 //            }
-            AddBinScreen(null, null)
+            AddBinScreen(simBinViewModel, null)
         }
     }
 }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -25,6 +26,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -71,9 +73,9 @@ fun ViewBinScreen(viewModel: BinViewModel, navController: NavController) {
     Log.e("ViewBinScreen", "Got a BinUIState with " + (binUiState.bwcList.size) + " bins")
 
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = PaddingValues(16.dp),
     ) {
         item {
             MainStatusText(binUiState, now)
@@ -93,7 +95,7 @@ fun ViewBinScreen(viewModel: BinViewModel, navController: NavController) {
 //                    AddDefaultBinsButton(viewModel)
 //                }
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -238,8 +240,9 @@ fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwc: Display
                         // Toggle bin status
                         Button(
                             onClick = {
-                                bwc.updateState(LocalDateTime.now())
-                                viewModel.updateBin(bwc)
+                                val bin = bwc.bin
+                                bin.updateState(LocalDateTime.now())
+                                viewModel.updateBin(bin)
                             },
                             colors = ButtonDefaults.buttonColors(backgroundColor = frgColor),
                             content = {
@@ -293,11 +296,12 @@ fun AddDefaultBinsButton(viewModel: BinViewModel?) {
     val bkgColor = if (isSystemInDarkTheme()) GreenPrimary100 else GreenPrimary900
     val frgColor = if (isSystemInDarkTheme()) GreenPrimary900 else GreenPrimary100
 
+    val context = LocalContext.current
     Button(
         colors = ButtonDefaults.buttonColors(backgroundColor = bkgColor, contentColor = frgColor),
         shape = CircleShape,
         onClick = {
-            viewModel?.initDefaultBins()
+            viewModel?.initDefaultBins(context)
         },
         modifier = Modifier.fillMaxHeight()
     ) {

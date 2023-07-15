@@ -1,13 +1,14 @@
 package com.example.justbintime.data
 
+import android.content.Context
 import android.util.Log
 import androidx.annotation.WorkerThread
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.asLiveData
 import com.example.justbintime.data.dao.BinDao
 import com.example.justbintime.data.dao.ColourDao
 import com.example.justbintime.data.dao.IconDao
+import com.example.justbintime.data.`object`.Bin
+import com.example.justbintime.data.`object`.BinColours
+import com.example.justbintime.data.`object`.BinIcon
 import kotlinx.coroutines.flow.Flow
 
 class BinRepository(
@@ -16,34 +17,33 @@ class BinRepository(
     private val iconDao: IconDao
 ) {
     val allDisplayableBins: Flow<List<DisplayableBin>> = binDao.observeAllWithColours()
+    val allBinColours: Flow<List<BinColours>> = colourDao.observeAll()
+    val allBinIcons: Flow<List<BinIcon>> = iconDao.observeAll()
 //    private val iconResourceMapLive: LiveData<Map<String, Int>> = iconDao.observeMapByDrawableStr()
 
-    @WorkerThread
-    suspend fun addBin(dbin: DisplayableBin) {
-        iconDao.upsert(dbin.icon)
-        colourDao.upsert(dbin.colours)
-        val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
-        val retrievedColours = colourDao.getByPrimary(dbin.colours.cPrimary).first()
-        dbin.bin.binIconId = icon.iconId
-        dbin.bin.binColoursId = retrievedColours.bcId
+//    @WorkerThread
+//    suspend fun addBin(dbin: DisplayableBin) {
+//        iconDao.upsert(dbin.icon)
+//        colourDao.upsert(dbin.colours)
+//        val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
+//        val retrievedColours = colourDao.getByPrimary(dbin.colours.cPrimary).first()
+//        dbin.bin.binIconId = icon.iconId
+//        dbin.bin.binColoursId = retrievedColours.bcId
+//
+//        binDao.upsert(dbin.bin)
+//        Log.d("BinRepository", "Added bin \"${dbin.bin.name}\" successfully")
+//    }
 
-        binDao.upsert(dbin.bin)
-        Log.d("BinRepository", "Added bin \"${dbin.bin.name}\" successfully")
+    @WorkerThread
+    suspend fun insertBin(bin: Bin) {
+        binDao.insert(bin)
+        Log.d("BinRepository", "Inserted bin \"${bin.name}\" successfully")
     }
 
     @WorkerThread
-    suspend fun upsertBin(dbin: DisplayableBin) {
-        iconDao.upsert(dbin.icon)
-        colourDao.upsert(dbin.colours)
-
-        // Now get the ID of the colour scheme (so we can create the association from bin to colours)
-        val retrievedColours = colourDao.getByPrimary(dbin.colours.cPrimary).first()
-        val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
-
-        dbin.bin.binColoursId = retrievedColours.bcId
-        dbin.bin.binIconId = icon.iconId
-        binDao.upsert(dbin.bin)
-        Log.d("BinRepository", "Updated bin \"${dbin.bin.name}\" successfully")
+    suspend fun updateBin(bin: Bin) {
+        binDao.update(bin)
+        Log.d("BinRepository", "Updated bin \"${bin.name}\" successfully")
     }
 
     @WorkerThread
@@ -53,9 +53,25 @@ class BinRepository(
     }
 
     @WorkerThread
-    suspend fun deleteBin(binWC: DisplayableBin) {
-        binDao.delete(binWC.bin)
-        Log.e("BinRepository", "Deleted bin ${binWC.getName()}")
+    suspend fun deleteBin(bin: Bin) {
+        binDao.delete(bin)
+        Log.e("BinRepository", "Deleted bin ${bin.name}")
+    }
+
+    @WorkerThread
+    suspend fun addColours(colours: BinColours) {
+        colourDao.insert(colours)
+    }
+
+    @WorkerThread
+    suspend fun addIcon(icon: BinIcon) {
+        iconDao.insert(icon)
+    }
+
+    // Clear the contents of the database and pre-populate it with the default bins
+    fun resetBinsToDefault(context: Context) {
+        val db = AppDatabase.getDatabase(context)
+        AppDatabase.initDatabase(db)
     }
 
 }

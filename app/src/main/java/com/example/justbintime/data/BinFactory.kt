@@ -45,7 +45,7 @@ class BinFactory {
         return DisplayableBin(
             makeLandfillBin(),
             BinColours(BinLandfillColor),
-            BinIcon(drawableResStr = BinIcon.LANDFILL_RES, drawableName = "Landfill")
+            BinIcon(BinIcon.LANDFILL_RES, BinIcon.LANDFILL_NAME)
         )
     }
 
@@ -53,7 +53,7 @@ class BinFactory {
         return DisplayableBin(
             makeRecyclingBin(),
             BinColours(BinRecyclingColor),
-            BinIcon(drawableResStr = BinIcon.RECYCLING_RES, drawableName = "Recycling")
+            BinIcon(BinIcon.RECYCLING_RES, BinIcon.RECYCLING_NAME)
         )
     }
 
@@ -61,7 +61,7 @@ class BinFactory {
         return DisplayableBin(
             makeGardenBin(),
             BinColours(BinGardenColor),
-            BinIcon(drawableResStr = BinIcon.GARDEN_RES, drawableName = "Garden")
+            BinIcon(BinIcon.GARDEN_RES, BinIcon.GARDEN_NAME)
         )
     }
 
@@ -75,17 +75,22 @@ class BinFactory {
         return BinUiState(bins)
     }
 
+    // Constructs the default set of BinIcons
     fun makeIcons(): List<BinIcon> {
-        val genericIcon = BinIcon(drawableResStr = BinIcon.GENERIC_RES, drawableName = "General")
-        val landfillIcon = BinIcon(drawableResStr = BinIcon.LANDFILL_RES, drawableName = "Landfill")
-        val recyclingIcon = BinIcon(drawableResStr = BinIcon.RECYCLING_RES, drawableName = "Recycling")
-        val gardenIcon = BinIcon(drawableResStr = BinIcon.GARDEN_RES, drawableName = "Garden")
-        val medicalIcon = BinIcon(drawableResStr = BinIcon.MEDICAL_RES, drawableName = "Medical")
-        val industrialIcon = BinIcon(drawableResStr = BinIcon.INDUSTRIAL_RES, drawableName = "Industrial")
+        val genericIcon = BinIcon(BinIcon.GENERIC_RES, BinIcon.GENERIC_NAME)
+        val landfillIcon = BinIcon(BinIcon.LANDFILL_RES, BinIcon.LANDFILL_NAME)
+        val recyclingIcon = BinIcon(BinIcon.RECYCLING_RES, BinIcon.RECYCLING_NAME)
+        val gardenIcon = BinIcon(BinIcon.GARDEN_RES, BinIcon.GARDEN_NAME)
+        val medicalIcon = BinIcon(BinIcon.MEDICAL_RES, BinIcon.MEDICAL_NAME)
+        val industrialIcon = BinIcon(BinIcon.INDUSTRIAL_RES, BinIcon.INDUSTRIAL_NAME)
+        val wheelieIcon = BinIcon(BinIcon.WHEELIE_RES, BinIcon.WHEELIE_NAME)
+        val wheelieFullIcon = BinIcon(BinIcon.WHEELIE_FULL_RES, BinIcon.WHEELIE_FULL_NAME)
+        val trashIcon = BinIcon(BinIcon.TRASH_BAG_RES, BinIcon.TRASH_BAG_NAME)
 
         return listOf(
             genericIcon, landfillIcon, recyclingIcon,
-            gardenIcon, medicalIcon, industrialIcon
+            gardenIcon, medicalIcon, industrialIcon,
+            wheelieIcon, wheelieFullIcon, trashIcon
         )
     }
 }

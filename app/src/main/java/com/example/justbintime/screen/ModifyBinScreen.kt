@@ -37,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -55,7 +54,8 @@ import com.example.justbintime.data.DisplayableBin
 import com.example.justbintime.data.`object`.BinColours
 import com.example.justbintime.data.`object`.BinIcon
 import com.example.justbintime.ui.theme.JustBinTimeTheme
-import com.example.justbintime.viewmodel.BinViewModel
+import com.example.justbintime.viewmodel.IBinHolder
+import com.example.justbintime.viewmodel.SimBinViewModel
 import com.vanpra.composematerialdialogs.MaterialDialog
 import com.vanpra.composematerialdialogs.MaterialDialogState
 import com.vanpra.composematerialdialogs.color.colorChooser
@@ -69,7 +69,7 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun ModifyBinScreen(
-    viewModel: BinViewModel?,
+    viewModel: IBinHolder,
     navHostController: NavHostController?,
     binOrig: DisplayableBin,
     modifyMode: BinModifyMode
@@ -108,19 +108,37 @@ fun ModifyBinScreen(
                     // Update the collection date (and importantly, recalculate nextCollectionDate)
                     bin.setCollectionDate(collectAt)
 
-                    // If the colour has changed, make a new colour scheme
-                    var colours = binMut.colours
-                    if (binPrimaryColour.value != binMut.colours.colorPrimary)
-                        colours = BinColours(binPrimaryColour.value)
+                    // Try to get the ID of the existing Colour Scheme
+                    var bcId = viewModel.getBinColoursId(binPrimaryColour.value)
+                    // If it can't be found, make a new one and add it
+                    if (bcId == null) {
+                        val colours = BinColours(binPrimaryColour.value)
+                        viewModel.insertColour(colours)
+                        bcId = viewModel.getBinColoursId(binPrimaryColour.value)
+                    }
+                    // Then, set the relationship between Bin and BinColours
+                    bin.binColoursId = bcId ?: 1
 
-                    var icon = binMut.icon
-                    val newIconResString = iconName.value?.let { BinIcon.nameToResourceString(it) }
-                    if (newIconResString != binMut.getIconResStr() && newIconResString != null)
-                        icon = BinIcon(0, newIconResString)
+                    // Try to get the ID of the existing Colour Scheme
+                    val iconNameValue = iconName.value
+                    var iconId = viewModel.getBinIconId(iconNameValue)
+                    // If the icon can't be found, then we can't add another
+                    // without knowing the Drawable Resource String identifier
+//                    if (iconId == null) {
+//                        val iconResStr = BinIcon.nameToResourceString(iconNameValue)
+//                        val icon = BinIcon(0, iconResStr, iconNameValue)
+//                        viewModel?.addIcon(icon)
+//                        iconId = viewModel?.getBinColoursId(iconNameValue)
+//                    }
+                    // Then, set the relationship between Bin and BinColours
+                    bin.binIconId = iconId ?: 1
 
-                    // Push changes to the repo
-                    val newDispBin = DisplayableBin(bin, colours, icon)
-                    viewModel?.upsertBin(newDispBin)
+                    if (isCreating) {
+                        viewModel.insertBin(bin)
+                    }
+                    else {
+                        viewModel.updateBin(bin)
+                    }
 
                     navHostController?.navigateUp()
                     Log.e("BinNavigation", "Navigated back to ViewBinsScreen")
@@ -152,7 +170,7 @@ fun ModifyBinScreen(
 
             if (canDelete) {
                 DeleteBinButton(onClick = {
-                    viewModel?.deleteBin(binMut)
+                    viewModel.deleteBin(binMut.bin)
                     navHostController?.navigateUp()
                 })
             }
@@ -172,10 +190,11 @@ fun ModifyBinScreen(
         }
     }
 
+    val listOfColors = viewModel.getColours()
     // Setup the dialog pickers
     DateDialogSetup(dateDialogState, binLastCollectDate, binNameStr)
     TimeDialogSetup(timeDialogState, binCollectTime, binNameStr)
-    ColorDialogSetup(colorDialogState, binPrimaryColour, binNameStr)
+    ColorDialogSetup(colorDialogState, listOfColors, binPrimaryColour, binNameStr)
 }
 
 @Composable
@@ -271,7 +290,7 @@ fun DateDialogSetup(
     ) {
         datepicker(
             initialDate = binLastCollectDate.value,
-            title = "Pick collection date for \"$binNameStr.value\"",
+            title = "Pick collection date for \"${binNameStr.value}\"",
             // Only allow dates not in the future
             allowedDateValidator = {
                 !it.isAfter(LocalDate.now())
@@ -298,7 +317,7 @@ fun TimeDialogSetup(
     ) {
         timepicker(
             initialTime = binCollectTime.value,
-            title = "Pick collection time for \"$binNameStr.value\"",
+            title = "Pick collection time for \"${binNameStr.value}\"",
             is24HourClock = true
         ) {
             binCollectTime.value = it
@@ -307,7 +326,19 @@ fun TimeDialogSetup(
 }
 
 @Composable
-fun ColorDialogSetup(colorDialogState: MaterialDialogState, binPrimaryColour: MutableState<Color>, binNameStr: MutableState<String>) {
+fun ColorDialogSetup(
+    colorDialogState: MaterialDialogState,
+    listOfColors: List<Color>,
+    binPrimaryColour: MutableState<Color>,
+    binNameStr: MutableState<String>
+) {
+    var initialIndex = 0
+    for (i in listOfColors.indices) {
+        if (listOfColors[i] == binPrimaryColour.value) {
+            initialIndex = i
+        }
+    }
+
     MaterialDialog (
         dialogState = colorDialogState,
         buttons = {
@@ -321,8 +352,8 @@ fun ColorDialogSetup(colorDialogState: MaterialDialogState, binPrimaryColour: Mu
             fontSize = 14.sp
         )
         colorChooser(
-            colors = BinColours.ALL_COLORS,
-            initialSelection = BinColours.findIndexOfColour(binPrimaryColour.value)
+            colors = listOfColors,
+            initialSelection = initialIndex
         ) {
             binPrimaryColour.value = it
         }
@@ -330,7 +361,6 @@ fun ColorDialogSetup(colorDialogState: MaterialDialogState, binPrimaryColour: Mu
 }
 
 // More UI cards
-
 @Composable
 fun BinLastCollectDateTimeCards(
     binLastCollectDate: MutableState<LocalDate>,
@@ -397,7 +427,7 @@ fun BinLastCollectDateTimeCards(
 fun BinColourAndIconCard(
     binPrimaryColour: MutableState<Color>,
     colorDialogState: MaterialDialogState,
-    binIconName: MutableState<String?>
+    binIconName: MutableState<String>
 ) {
     Card (backgroundColor = MaterialTheme.colors.secondary,
         shape = RoundedCornerShape(12.dp),
@@ -429,21 +459,19 @@ fun BinColourAndIconCard(
                     expanded = dropdownMenuExpanded,
                     onExpandedChange = { dropdownMenuExpanded = !dropdownMenuExpanded }
                 ) {
-                    binIconName.value?.let {
-                        TextField(
-                            readOnly = true,
-                            value = it,
-                            onValueChange = {},
-                            leadingIcon = { DrawIconFromName(binIconName.value) },
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(
-                                    expanded = dropdownMenuExpanded
-                                )
-                            },
-                            colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                            modifier = Modifier.width(200.dp).align(Alignment.CenterVertically)
-                        )
-                    }
+                    TextField(
+                        readOnly = true,
+                        value = binIconName.value,
+                        onValueChange = {},
+                        leadingIcon = { DrawIconFromName(binIconName.value) },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                expanded = dropdownMenuExpanded
+                            )
+                        },
+                        colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                        modifier = Modifier.width(200.dp).align(Alignment.CenterVertically)
+                    )
                     ExposedDropdownMenu(
                         expanded = dropdownMenuExpanded,
                         onDismissRequest = { dropdownMenuExpanded = false }
@@ -490,10 +518,11 @@ fun DrawIconFromName(iconName: String?) {
 @Preview
 @Composable
 fun PreviewModifyBin() {
+    val simBinViewModel = SimBinViewModel()
     JustBinTimeTheme(darkTheme = true) {
         val bin = BinFactory().makeLandfillBinWithColours()
         Surface {
-            ModifyBinScreen(null, null, bin, BinModifyMode.MODE_EDIT)
+            ModifyBinScreen(simBinViewModel, null, bin, BinModifyMode.MODE_EDIT)
         }
     }
 }

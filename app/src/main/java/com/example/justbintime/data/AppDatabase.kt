@@ -19,7 +19,7 @@ import com.example.justbintime.ui.theme.BinRecyclingColor
 import java.util.concurrent.Executors
 
 
-@Database(entities = [Bin::class, BinColours::class, BinIcon::class], version = 12, exportSchema = true)
+@Database(entities = [Bin::class, BinColours::class, BinIcon::class], version = 13, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun binDao(): BinDao
@@ -76,7 +76,8 @@ abstract class AppDatabase : RoomDatabase() {
             val landfillColor = BinColours(BinLandfillColor)
             val recyclingColor = BinColours(BinRecyclingColor)
             val gardenColor = BinColours(BinGardenColor)
-            colDao.upsert(landfillColor, recyclingColor, gardenColor)
+            val allBinColours = BinColours.ALL_COLORS.map { BinColours(it) }
+            colDao.insertMany(allBinColours)
 
             // Check the number of colours in the DB
             val numCols = colDao.getAll().size
@@ -85,6 +86,9 @@ abstract class AppDatabase : RoomDatabase() {
             // Then, insert the icons
             val binIcons = factory.makeIcons()
             iconDao.upsertAll(binIcons)
+            // Check the number of colours in the DB
+            val numIcons = iconDao.getAll().size
+            Log.e("AppDatabase", "Prepop'd $numIcons icons")
 
             // Make the default set of bins (without reference to colour/icon)
             val landfillBin = factory.makeLandfillBin()
@@ -101,7 +105,7 @@ abstract class AppDatabase : RoomDatabase() {
             recyclingBin.binIconId = iconDao.getByResourceString(BinIcon.RECYCLING_RES).first().iconId
             gardenBin.binIconId = iconDao.getByResourceString(BinIcon.GARDEN_RES).first().iconId
 
-            binDao.insertAll(landfillBin, recyclingBin, gardenBin)
+            binDao.insert(landfillBin, recyclingBin, gardenBin)
 
             // Check the bins were inserted correctly
             val numBins = binDao.getAll().size

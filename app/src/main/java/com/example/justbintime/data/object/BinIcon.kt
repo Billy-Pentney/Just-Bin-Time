@@ -11,14 +11,10 @@ import com.example.justbintime.ui.theme.BinLandfillColorLight
 
 @Entity(tableName = "bin_icons")
 data class BinIcon(
-    @PrimaryKey (autoGenerate = true) val iconId: Int = 0,
     @ColumnInfo val drawableResStr: String,
-    @ColumnInfo var drawableName: String? = null
+    @ColumnInfo var drawableName: String,
+    @PrimaryKey (autoGenerate = true) val iconId: Int = 0
 ) {
-    init {
-        drawableName = resourceStringToName(drawableResStr)
-    }
-
     companion object {
         fun getIconIndex(iconResStr: String): Int {
             for (i in 0..DRAWABLE_RES_LIST.size) {
@@ -69,6 +65,10 @@ data class BinIcon(
             }
         }
 
+        fun makeDefault(): BinIcon {
+            return BinIcon(GENERIC_RES, GENERIC_NAME)
+        }
+
         const val GENERIC_RES = "bin_generic"
         const val LANDFILL_RES = "bin_landfill"
         const val RECYCLING_RES = "bin_recycling"
@@ -79,15 +79,15 @@ data class BinIcon(
         const val WHEELIE_FULL_RES = "bin_wheelie_full"
         const val TRASH_BAG_RES = "bin_trash"
 
-        private const val GENERIC_NAME = "Generic"
-        private const val LANDFILL_NAME = "Landfill"
-        private const val RECYCLING_NAME = "Recycling"
-        private const val GARDEN_NAME = "Garden"
-        private const val MEDICAL_NAME = "Medical"
-        private const val INDUSTRIAL_NAME = "Industrial"
-        private const val WHEELIE_NAME = "Wheelie Bin"
-        private const val WHEELIE_FULL_NAME = "Wheelie Bin (Full)"
-        private const val TRASH_BAG_NAME = "Trash Bag"
+        const val GENERIC_NAME = "Generic"
+        const val LANDFILL_NAME = "Landfill"
+        const val RECYCLING_NAME = "Recycling"
+        const val GARDEN_NAME = "Garden"
+        const val MEDICAL_NAME = "Medical"
+        const val INDUSTRIAL_NAME = "Industrial"
+        const val WHEELIE_NAME = "Wheelie Bin"
+        const val WHEELIE_FULL_NAME = "Wheelie Bin (Full)"
+        const val TRASH_BAG_NAME = "Trash Bag"
 
         private val DRAWABLE_RES_LIST = listOf(
             GENERIC_RES, LANDFILL_RES, RECYCLING_RES, GARDEN_RES, INDUSTRIAL_RES, MEDICAL_RES,
