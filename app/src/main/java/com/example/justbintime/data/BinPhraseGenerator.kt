@@ -9,19 +9,23 @@ class BinPhraseGenerator {
     companion object {
         var binNotDuePhrases: Array<String>? = null
         var binDuePhrases: Array<String>? = null
+        var lastChosenIndex: Int = 0
 
         fun initArrays(context: Context) {
             binDuePhrases = context.resources.getStringArray(R.array.BinDueCollectPhrases)
-            binNotDuePhrases = context.resources.getStringArray(R.array.BinDueCollectPhrases)
+            binNotDuePhrases = context.resources.getStringArray(R.array.BinNotDuePhrases)
         }
 
         private fun pickRandomPhraseFromArray(arr: Array<String>?): String {
-            return if (arr.isNullOrEmpty()) {
+            if (arr.isNullOrEmpty()) {
                 Log.e("BinPhraseGenerator", "Attempt to get phrase from null/empty array")
-                "??"
-            } else {
-                arr[Random.nextInt(arr.size)]
+                return "??"
             }
+            val shift = if (arr.size > 1) Random.nextInt(1,arr.size-1)
+                        else 1
+            // Avoid picking the same index again
+            lastChosenIndex = (lastChosenIndex + shift) % arr.size
+            return arr[lastChosenIndex]
         }
 
         fun getPhraseForState(numBinsDue: Int): String {

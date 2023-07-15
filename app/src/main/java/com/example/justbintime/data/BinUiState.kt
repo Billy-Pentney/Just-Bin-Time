@@ -17,9 +17,13 @@ class BinUiState(
 
     fun getMainBinStatusPhrase(): String {
         if (binDuePhrase == null) {
-            binDuePhrase = BinPhraseGenerator.getPhraseForState(numBinsDue)
+            updateMainBinStatusPhrase()
         }
         return binDuePhrase ?: "?"
+    }
+
+    fun updateMainBinStatusPhrase() {
+        binDuePhrase = BinPhraseGenerator.getPhraseForState(numBinsDue)
     }
 
     fun getSortedBins(now: LocalDateTime): List<DisplayableBin> {
@@ -46,11 +50,5 @@ class BinUiState(
             return "$numBins bin collected soon"
         }
         return "$numBins bins collected soon"
-    }
-
-    fun update(bwcList: List<DisplayableBin>) {
-        this.bwcList = bwcList
-        numBinsDue = countNumBinsCollectedSoon(LocalDateTime.now())
-        binDuePhrase = BinPhraseGenerator.getPhraseForState(numBinsDue)
     }
 }

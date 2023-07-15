@@ -27,14 +27,17 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -43,29 +46,35 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.justbintime.BinScreen
 import com.example.justbintime.data.BinUiState
 import com.example.justbintime.R
+import com.example.justbintime.data.BinFactory
 import com.example.justbintime.data.`object`.Bin
 import com.example.justbintime.data.DisplayableBin
 import com.example.justbintime.ui.theme.AmberWarning
 import com.example.justbintime.ui.theme.AmberWarningDark
 import com.example.justbintime.ui.theme.GreenPrimary100
 import com.example.justbintime.ui.theme.GreenPrimary900
+import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.ui.theme.RedWarning
 import com.example.justbintime.ui.theme.RedWarningDark
 import com.example.justbintime.viewmodel.BinViewModel
 import com.example.justbintime.viewmodel.IBinHolder
+import com.example.justbintime.viewmodel.SimBinViewModel
 import java.time.LocalDateTime
 
 
 @Composable
-fun ViewBinScreen(viewModel: BinViewModel, navController: NavController) {
+fun ViewBinScreen(viewModel: IBinHolder, navController: NavController) {
 //    val binList by viewModel.binsLive.observeAsState()
     val binUiState by viewModel.getUiState().collectAsState()
     val now by remember { mutableStateOf(LocalDateTime.now()) }
@@ -103,7 +112,8 @@ fun ViewBinScreen(viewModel: BinViewModel, navController: NavController) {
 @Composable
 fun MainStatusText(binUiState: BinUiState, now: LocalDateTime) {
     val numBinsAwaiting = binUiState.getNumBinsToBeCollectedSoonText(now)
-    val binStatusText = binUiState.getMainBinStatusPhrase()
+//    val originalStatusPhrase =
+    var binStatusText by remember { mutableStateOf(binUiState.getMainBinStatusPhrase()) }
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -122,11 +132,21 @@ fun MainStatusText(binUiState: BinUiState, now: LocalDateTime) {
         Text(
             text = numBinsAwaiting,
             textAlign = TextAlign.Center,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
             fontSize = 18.sp,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            fontStyle = FontStyle.Italic,
             color = MaterialTheme.colors.onBackground
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        IconButton(
+            onClick = {
+                binUiState.updateMainBinStatusPhrase()
+                binStatusText = binUiState.getMainBinStatusPhrase()
+            },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        ) {
+            Icon(Icons.Default.Refresh, "Refresh the phrase")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -350,6 +370,18 @@ fun WarningForCollection(bwc: DisplayableBin, darkTheme: Boolean) {
                         .aspectRatio(1.0f)
                 )
             }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewMainBinScreen() {
+    val simBinViewModel = SimBinViewModel(BinFactory().makeUiState())
+    JustBinTimeTheme(darkTheme = true) {
+        val nc = rememberNavController()
+        Surface {
+            ViewBinScreen(simBinViewModel, nc)
         }
     }
 }

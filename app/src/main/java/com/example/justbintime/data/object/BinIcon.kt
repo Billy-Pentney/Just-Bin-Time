@@ -16,16 +16,6 @@ data class BinIcon(
     @PrimaryKey (autoGenerate = true) val iconId: Int = 0
 ) {
     companion object {
-        fun getIconIndex(iconResStr: String): Int {
-            for (i in 0..DRAWABLE_RES_LIST.size) {
-                val drawableStr = DRAWABLE_RES_LIST[i]
-                if (iconResStr == drawableStr) {
-                    return i
-                }
-            }
-            return 0
-        }
-
         fun nameToResourceString(iconName: String): String? {
             return when (iconName) {
                 GENERIC_NAME        -> GENERIC_RES
@@ -65,6 +55,7 @@ data class BinIcon(
             }
         }
 
+        // Create a Generic Icon (used for displaying a new Bin)
         fun makeDefault(): BinIcon {
             return BinIcon(GENERIC_RES, GENERIC_NAME)
         }
@@ -89,10 +80,6 @@ data class BinIcon(
         const val WHEELIE_FULL_NAME = "Wheelie Bin (Full)"
         const val TRASH_BAG_NAME = "Trash Bag"
 
-        private val DRAWABLE_RES_LIST = listOf(
-            GENERIC_RES, LANDFILL_RES, RECYCLING_RES, GARDEN_RES, INDUSTRIAL_RES, MEDICAL_RES,
-            WHEELIE_RES, WHEELIE_FULL_RES, TRASH_BAG_RES
-        )
         val NAME_LIST = listOf(
             GENERIC_NAME, LANDFILL_NAME, RECYCLING_NAME, GARDEN_NAME, INDUSTRIAL_NAME, MEDICAL_NAME,
             WHEELIE_NAME, WHEELIE_FULL_NAME, TRASH_BAG_NAME
@@ -100,13 +87,6 @@ data class BinIcon(
     }
 
     fun getIconId(context: Context): Int? {
-        return try {
-            // Attempt to retrieve the resource ID for this bin's icon
-            Log.e("DisplayableBin", "Try to load resource with string \"${drawableResStr}\"")
-            context.resources.getIdentifier(drawableResStr, "drawable", context.packageName)
-        } catch (ex: Resources.NotFoundException) {
-            Log.e("DisplayableBin", "Cannot load resource with string \"${drawableResStr}\"")
-            null
-        }
+        return getDrawableResourceId(context, this.drawableResStr)
     }
 }

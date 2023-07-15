@@ -9,6 +9,7 @@
         <item>Get BIN there, my son!</item>
         <item>Quite BINteresting…</item>
         <item>Batman &amp; RoBIN</item>
+        <item>Bin liners or one-liners?</item>
         <item>I. am. BINevitable.</item>
         <item>BIN up</item>
         <item>BIN and tonic?</item>
@@ -21,12 +22,13 @@
         <item>Nothing to report</item>
         <item>…just chillin\'</item>
         <item>Hello there!</item>
+        <item>Safe and sound</item>
+        <item>\'sup?</item>
         <item>:)</item>
     </string-array>
 
     <string name="label_day_days">day(s)</string>
     <string name="label_bin_collected_interval_days">This bin is collected every…</string>
-
 
     <string name="content_desc_icon_landfill">Recycling Icon showing three arrows pointing at each </string>
 </resources>
