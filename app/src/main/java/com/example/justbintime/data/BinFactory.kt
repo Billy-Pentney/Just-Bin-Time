@@ -1,8 +1,8 @@
 package com.example.justbintime.data
 
-import com.example.justbintime.data.`object`.Bin
-import com.example.justbintime.data.`object`.BinColours
-import com.example.justbintime.data.`object`.BinIcon
+import com.example.justbintime.data.obj.Bin
+import com.example.justbintime.data.obj.BinColours
+import com.example.justbintime.data.obj.BinIcon
 import com.example.justbintime.ui.theme.BinGardenColor
 import com.example.justbintime.ui.theme.BinLandfillColor
 import com.example.justbintime.ui.theme.BinRecyclingColor

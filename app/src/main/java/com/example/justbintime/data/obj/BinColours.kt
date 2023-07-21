@@ -1,4 +1,4 @@
-package com.example.justbintime.data.`object`
+package com.example.justbintime.data.obj
 
 import androidx.compose.ui.graphics.Color
 import androidx.room.ColumnInfo

@@ -10,17 +10,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.justbintime.data.dao.BinDao
 import com.example.justbintime.data.dao.ColourDao
 import com.example.justbintime.data.dao.IconDao
-import com.example.justbintime.data.`object`.Bin
-import com.example.justbintime.data.`object`.BinColours
-import com.example.justbintime.data.`object`.BinColours.Companion.fromColorToLong
-import com.example.justbintime.data.`object`.BinIcon
-import com.example.justbintime.ui.theme.BinGardenColor
-import com.example.justbintime.ui.theme.BinLandfillColor
-import com.example.justbintime.ui.theme.BinRecyclingColor
+import com.example.justbintime.data.obj.Bin
+import com.example.justbintime.data.obj.BinColours
+import com.example.justbintime.data.obj.BinColours.Companion.fromColorToLong
+import com.example.justbintime.data.obj.BinIcon
 import java.util.concurrent.Executors
 
 
-@Database(entities = [Bin::class, BinColours::class, BinIcon::class], version = 13, exportSchema = true)
+@Database(entities = [Bin::class, BinColours::class, BinIcon::class], version = 14, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun binDao(): BinDao

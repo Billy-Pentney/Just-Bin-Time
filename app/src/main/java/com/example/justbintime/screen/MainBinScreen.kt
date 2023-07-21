@@ -26,7 +26,6 @@ import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -58,7 +57,7 @@ import com.example.justbintime.BinScreen
 import com.example.justbintime.data.BinUiState
 import com.example.justbintime.R
 import com.example.justbintime.data.BinFactory
-import com.example.justbintime.data.`object`.Bin
+import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.data.DisplayableBin
 import com.example.justbintime.ui.theme.AmberWarning
 import com.example.justbintime.ui.theme.AmberWarningDark

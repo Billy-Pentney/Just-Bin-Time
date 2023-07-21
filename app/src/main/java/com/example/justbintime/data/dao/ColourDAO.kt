@@ -3,10 +3,9 @@ package com.example.justbintime.data.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
-import androidx.room.MapInfo
 import androidx.room.Query
 import androidx.room.Upsert
-import com.example.justbintime.data.`object`.BinColours
+import com.example.justbintime.data.obj.BinColours
 import kotlinx.coroutines.flow.Flow
 
 @Dao

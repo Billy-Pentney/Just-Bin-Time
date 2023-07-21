@@ -7,7 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
-import com.example.justbintime.data.`object`.Bin
+import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.data.DisplayableBin
 import kotlinx.coroutines.flow.Flow
 

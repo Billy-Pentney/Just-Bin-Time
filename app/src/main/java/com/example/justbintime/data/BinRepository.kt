@@ -6,9 +6,9 @@ import androidx.annotation.WorkerThread
 import com.example.justbintime.data.dao.BinDao
 import com.example.justbintime.data.dao.ColourDao
 import com.example.justbintime.data.dao.IconDao
-import com.example.justbintime.data.`object`.Bin
-import com.example.justbintime.data.`object`.BinColours
-import com.example.justbintime.data.`object`.BinIcon
+import com.example.justbintime.data.obj.Bin
+import com.example.justbintime.data.obj.BinColours
+import com.example.justbintime.data.obj.BinIcon
 import kotlinx.coroutines.flow.Flow
 
 class BinRepository(

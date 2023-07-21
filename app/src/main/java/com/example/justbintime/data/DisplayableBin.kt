@@ -1,14 +1,11 @@
 package com.example.justbintime.data
 
 import android.content.Context
-import android.content.res.Resources
-import android.content.res.Resources.NotFoundException
-import android.util.Log
 import androidx.room.Embedded
 import androidx.room.Relation
-import com.example.justbintime.data.`object`.Bin
-import com.example.justbintime.data.`object`.BinColours
-import com.example.justbintime.data.`object`.BinIcon
+import com.example.justbintime.data.obj.Bin
+import com.example.justbintime.data.obj.BinColours
+import com.example.justbintime.data.obj.BinIcon
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -86,5 +83,9 @@ data class DisplayableBin(
 
     fun updateColours(newColours: BinColours) {
         bin.binColoursId = newColours.bcId
+    }
+
+    fun getReminderSetting(): Boolean {
+        return bin.sendReminder
     }
 }

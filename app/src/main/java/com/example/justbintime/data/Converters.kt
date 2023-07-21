@@ -2,8 +2,7 @@ package com.example.justbintime.data
 
 import androidx.compose.ui.graphics.Color
 import androidx.room.TypeConverter
-import com.example.justbintime.data.`object`.BinColours
-import org.json.JSONObject
+import com.example.justbintime.data.obj.BinColours
 import java.time.LocalDateTime
 
 class Converters {

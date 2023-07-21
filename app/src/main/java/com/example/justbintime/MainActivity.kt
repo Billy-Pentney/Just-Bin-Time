@@ -1,6 +1,9 @@
 package com.example.justbintime
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,10 +13,15 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -23,7 +31,6 @@ import com.example.justbintime.screen.AddBinButton
 import com.example.justbintime.screen.AddBinScreen
 import com.example.justbintime.screen.DisplayBin
 import com.example.justbintime.screen.EditBinScreen
-import com.example.justbintime.screen.ModifyBinScreen
 import com.example.justbintime.screen.ViewBinScreen
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.viewmodel.BinViewModel

@@ -3,9 +3,9 @@ package com.example.justbintime.viewmodel
 import androidx.compose.ui.graphics.Color
 import com.example.justbintime.data.BinUiState
 import com.example.justbintime.data.DisplayableBin
-import com.example.justbintime.data.`object`.Bin
-import com.example.justbintime.data.`object`.BinColours
-import com.example.justbintime.data.`object`.BinIcon
+import com.example.justbintime.data.obj.Bin
+import com.example.justbintime.data.obj.BinColours
+import com.example.justbintime.data.obj.BinIcon
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

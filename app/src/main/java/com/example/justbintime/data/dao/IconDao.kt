@@ -7,8 +7,7 @@ import androidx.room.Insert
 import androidx.room.MapInfo
 import androidx.room.Query
 import androidx.room.Upsert
-import com.example.justbintime.data.`object`.BinColours
-import com.example.justbintime.data.`object`.BinIcon
+import com.example.justbintime.data.obj.BinIcon
 import kotlinx.coroutines.flow.Flow
 
 @Dao

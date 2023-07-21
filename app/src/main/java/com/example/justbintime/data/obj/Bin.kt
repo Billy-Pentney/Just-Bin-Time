@@ -1,13 +1,15 @@
-package com.example.justbintime.data.`object`
+package com.example.justbintime.data.obj
 
-import android.content.Context
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.Calendar
 
 @Entity(tableName="bins")
 data class Bin(
@@ -17,7 +19,8 @@ data class Bin(
     @ColumnInfo var lastCollectionDate: LocalDateTime,
     @ColumnInfo var daysBetweenCollections: Int = DEFAULT_COLLECT_INTERVAL,
     @ColumnInfo var binIconId: Int = 0,
-    @ColumnInfo val isDefault: Boolean = false
+    @ColumnInfo val isDefault: Boolean = false,
+    @ColumnInfo var sendReminder: Boolean = false
 ) {
     companion object {
         // Maximum number of hours till collection before the warning sign is displayed for a bin
@@ -155,5 +158,30 @@ data class Bin(
         lastCollectionDate = collectAt
         nextCollectionDate = collectAt
         determineNextCollectionDate(LocalDateTime.now())
+    }
+
+    fun getNextReminderTimeInMillis(): Long {
+        // Get the date/time in milliseconds exactly 24 hours before the next collection
+        val zoneId = ZoneId.systemDefault()
+        return nextCollectionDate.minusDays(1L).atZone(zoneId).toInstant().toEpochMilli()
+    }
+
+    fun getNextReminderTimeAsCalendar(): Calendar {
+        // Get the date/time in milliseconds exactly 24 hours before the next collection
+        val remindTime = nextCollectionDate.minusDays(1L)
+        val calendar = Calendar.getInstance().apply {
+            set(remindTime.year, remindTime.monthValue, remindTime.dayOfMonth,
+                remindTime.hour, remindTime.minute, remindTime.second)
+        }
+        return calendar
+    }
+
+    fun getCollectIntervalInMillis(): Long {
+        // Convert the days between the collections to milliseconds
+        return daysBetweenCollections * (1000*60*60*24).toLong()
+    }
+
+    fun getFormattedCollectTime(): String {
+        return nextCollectionDate.format(DateTimeFormatter.ofPattern("HH:mm"))
     }
 }

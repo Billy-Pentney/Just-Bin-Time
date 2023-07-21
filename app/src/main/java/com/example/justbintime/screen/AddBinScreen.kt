@@ -15,8 +15,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.justbintime.data.BinUiState
-import com.example.justbintime.data.`object`.Bin
-import com.example.justbintime.data.`object`.BinColours
+import com.example.justbintime.data.obj.Bin
+import com.example.justbintime.data.obj.BinColours
 import com.example.justbintime.data.DisplayableBin
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.viewmodel.IBinHolder

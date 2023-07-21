@@ -1,13 +1,10 @@
-package com.example.justbintime.data.`object`
+package com.example.justbintime.data.obj
 
 import android.content.Context
 import android.content.res.Resources
-import android.graphics.drawable.Drawable
-import android.util.Log
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.justbintime.ui.theme.BinLandfillColorLight
 
 @Entity(tableName = "bin_icons")
 data class BinIcon(

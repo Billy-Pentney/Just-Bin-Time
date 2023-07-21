@@ -1,6 +1,14 @@
 package com.example.justbintime.screen
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
+import androidx.compose.material.Checkbox
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
@@ -46,14 +55,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.chargemap.compose.numberpicker.NumberPicker
 import com.example.justbintime.R
 import com.example.justbintime.data.BinFactory
 import com.example.justbintime.data.DisplayableBin
-import com.example.justbintime.data.`object`.BinColours
-import com.example.justbintime.data.`object`.BinIcon
+import com.example.justbintime.data.obj.BinColours
+import com.example.justbintime.data.obj.BinIcon
+import com.example.justbintime.notifications.AndroidReminderScheduler
+import com.example.justbintime.permissions.PermissionProviderFactory
+import com.example.justbintime.permissions.PermissionResultDialog
 import com.example.justbintime.ui.theme.JustBinTimeTheme
+import com.example.justbintime.viewmodel.AppViewModel
 import com.example.justbintime.viewmodel.IBinHolder
 import com.example.justbintime.viewmodel.SimBinViewModel
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -90,8 +107,11 @@ fun ModifyBinScreen(
     val binLastCollectDate = remember { mutableStateOf(binMut.getLastCollectionDate()) }
     val binCollectTime = remember { mutableStateOf(binMut.getLastCollectionTime()) }
     val binCollectIntervalDays = remember { mutableStateOf(binMut.getCollectInterval()) }
+    val binReminderSetting = remember { mutableStateOf(binMut.getReminderSetting()) }
 
     val lblTextSize = 14.sp
+
+    val context = LocalContext.current
 
     Scaffold(
         floatingActionButtonPosition = FabPosition.End,
@@ -121,7 +141,7 @@ fun ModifyBinScreen(
 
                     // Try to get the ID of the existing Colour Scheme
                     val iconNameValue = iconName.value
-                    var iconId = viewModel.getBinIconId(iconNameValue)
+                    val iconId = viewModel.getBinIconId(iconNameValue)
                     // If the icon can't be found, then we can't add another
                     // without knowing the Drawable Resource String identifier
 //                    if (iconId == null) {
@@ -133,6 +153,16 @@ fun ModifyBinScreen(
                     // Then, set the relationship between Bin and BinColours
                     bin.binIconId = iconId ?: 1
 
+                    val reminderScheduler = AndroidReminderScheduler(context)
+                    if (binReminderSetting.value) {
+                        reminderScheduler.schedule(bin)
+                    }
+                    else if (bin.sendReminder && !binReminderSetting.value) {
+                        reminderScheduler.cancel(bin)
+                    }
+                    bin.sendReminder = binReminderSetting.value
+
+                    // Push changes to the repo.
                     if (isCreating) {
                         viewModel.insertBin(bin)
                     }
@@ -187,6 +217,8 @@ fun ModifyBinScreen(
             BinCollectIntervalCard(binCollectIntervalDays, lblTextSize)
             Spacer(Modifier.height(8.dp))
             BinColourAndIconCard(binPrimaryColour, colorDialogState, iconName)
+            Spacer(Modifier.height(8.dp))
+            BinNotificationsCard(binReminderSetting)
         }
     }
 
@@ -470,7 +502,9 @@ fun BinColourAndIconCard(
                             )
                         },
                         colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                        modifier = Modifier.width(200.dp).align(Alignment.CenterVertically)
+                        modifier = Modifier
+                            .width(200.dp)
+                            .align(Alignment.CenterVertically)
                     )
                     ExposedDropdownMenu(
                         expanded = dropdownMenuExpanded,
@@ -494,6 +528,134 @@ fun BinColourAndIconCard(
         }
     }
 }
+
+@Composable
+fun BinNotificationsCard(binReminderSetting: MutableState<Boolean>) {
+    val context = LocalContext.current
+    var notificationPermissionGotten by remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                        == PERMISSION_GRANTED)
+        } else {
+            mutableStateOf(true)
+        }
+    }
+    var alarmPermissionGotten by remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM)
+                        == PERMISSION_GRANTED)
+        } else {
+            mutableStateOf(true)
+        }
+    }
+
+    Card (backgroundColor = MaterialTheme.colors.secondary,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column (modifier = Modifier.padding(20.dp)) {
+            Row (horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    "Send reminder 24 hours before bin due",
+                    modifier = Modifier.fillMaxWidth(0.75f)
+                )
+                Spacer(Modifier.weight(1f))
+
+                if (!notificationPermissionGotten || !alarmPermissionGotten) {
+                    val vm = viewModel<AppViewModel>()
+                    vm.visiblePermissionDialogQueue.clear()
+                    if (!notificationPermissionGotten)
+                        vm.visiblePermissionDialogQueue.add(Manifest.permission.POST_NOTIFICATIONS)
+                    if (!alarmPermissionGotten)
+                        vm.visiblePermissionDialogQueue.add(Manifest.permission.SCHEDULE_EXACT_ALARM)
+                    ButtonToGetPermissions()
+                }
+                else {
+                    Checkbox(
+                        checked = binReminderSetting.value,
+                        onCheckedChange = {
+                            binReminderSetting.value = it
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ButtonToGetPermissions() {
+    val viewModel = viewModel<AppViewModel>()
+    val dialogQueue = viewModel.visiblePermissionDialogQueue
+
+    val permissionResultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { permissionMap ->
+            permissionMap.keys.forEach {
+                permission -> viewModel.onPermissionResult(
+                    permission,
+                    permissionMap[permission] == true
+                )
+            }
+        }
+    )
+
+    val context = LocalContext.current
+
+    dialogQueue.forEach { permission ->
+        PermissionProviderFactory.from(permission)?.let {
+            PermissionResultDialog(
+                permissionTextProvider = it,
+                // Todo - change this to store the permission status
+                isPermanentlyDenied = false,
+                onDismiss = viewModel::dismissDialog,
+                onOkay = {
+                    viewModel.dismissDialog()
+                    if (viewModel.shouldRetry(permission)) {
+                        permissionResultLauncher.launch(arrayOf(permission))
+                        Log.d("PermissionLauncher", "Requesting permission $permission")
+                    }
+                },
+                onGotoAppSettings = { openAppSettings(context) }
+            )
+        }
+    }
+
+    Button (onClick = {
+        val firstPermission = viewModel.visiblePermissionDialogQueue.first()
+        permissionResultLauncher.launch(arrayOf(firstPermission))
+        Log.d("PermissionLauncher", "Requesting permission $firstPermission")
+    }) {
+        Text("Request")
+    }
+}
+
+fun openAppSettings(context: Context) {
+    Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", context.packageName, null)
+    ).also {
+        startActivity(context, it, null)
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // TODO - figure out how best to store Content Description for each Icon
 
@@ -526,4 +688,5 @@ fun PreviewModifyBin() {
         }
     }
 }
+
 
