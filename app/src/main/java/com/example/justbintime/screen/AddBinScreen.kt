@@ -23,7 +23,12 @@ import com.example.justbintime.viewmodel.IBinHolder
 import com.example.justbintime.viewmodel.SimBinViewModel
 
 @Composable
-fun AddBinScreen(viewModel: IBinHolder, navHostController: NavHostController?) {
+fun AddBinScreen(
+    viewModel: IBinHolder,
+    navigateUp: (String) -> (Boolean),
+    setTitle: (String) -> Unit
+) {
+    setTitle.invoke("Add Bin")
 
     val defaultNewBin = Bin.makeDefault()
     val primaryColour = BinColours.GREY
@@ -35,8 +40,10 @@ fun AddBinScreen(viewModel: IBinHolder, navHostController: NavHostController?) {
         icon
     )
 
+    val navUpWithName = { navigateUp("Add Bin") }
+
     // Use the UI for editing an existing Bin
-    ModifyBinScreen(viewModel, navHostController, displayableBin, BinModifyMode.MODE_ADD)
+    ModifyBinScreen(viewModel, navUpWithName, displayableBin, BinModifyMode.MODE_ADD)
 }
 
 @Composable
@@ -76,7 +83,7 @@ fun PreviewAddBin() {
 //                    col -> BinColourBlobs(BinColours(col))
 //                }
 //            }
-            AddBinScreen(simBinViewModel, null)
+            AddBinScreen(simBinViewModel, { true })  { run {} }
         }
     }
 }

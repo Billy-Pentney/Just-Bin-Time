@@ -14,10 +14,26 @@ import com.example.justbintime.viewmodel.SimBinViewModel
 enum class BinModifyMode { MODE_EDIT, MODE_ADD }
 
 @Composable
-fun EditBinScreen(viewModel: IBinHolder, navHostController: NavHostController?, binOrig: DisplayableBin) {
+fun EditBinScreen(
+    viewModel: IBinHolder,
+    navigateUp: (String) -> (Boolean),
+    binOrig: DisplayableBin,
+    setTitle: (String) -> Unit,
+    showTopBarDeleteAction: () -> Unit,
+    setTopBarDeleteAction: (() -> Unit) -> Unit
+) {
+    setTitle.invoke("Edit My Bin")
+    val navUpWithName = { navigateUp("Edit Bin") }
+
+    showTopBarDeleteAction()
+    setTopBarDeleteAction.invoke {
+        viewModel.deleteBin(binOrig.bin)
+        navUpWithName()
+    }
+
     ModifyBinScreen(
         viewModel,
-        navHostController,
+        navUpWithName,
         binOrig,
         BinModifyMode.MODE_EDIT
     )
@@ -31,7 +47,7 @@ fun PreviewEditBin() {
     JustBinTimeTheme(darkTheme = true) {
         val bin = BinFactory().makeLandfillBinWithColours()
         Surface {
-            EditBinScreen(simBinViewModel, null, bin)
+            EditBinScreen(simBinViewModel, { true }, bin, { }, { }) { run {} }
         }
     }
 }

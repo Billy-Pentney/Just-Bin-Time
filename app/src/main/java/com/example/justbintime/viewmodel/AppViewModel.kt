@@ -38,4 +38,8 @@ class AppViewModel: ViewModel() {
         return permissionStatus[permission] == PermissionStatus.NOT_REQUESTED
                 || permissionStatus[permission] == PermissionStatus.DENIED_ONCE
     }
+
+    fun isPermanentlyDenied(permission: String): Boolean {
+        return permissionStatus[permission] == PermissionStatus.DENIED_TWICE
+    }
 }

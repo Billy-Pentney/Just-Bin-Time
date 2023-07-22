@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -45,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -87,12 +89,12 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ModifyBinScreen(
     viewModel: IBinHolder,
-    navHostController: NavHostController?,
+    navigateUp: () -> (Boolean),
     binOrig: DisplayableBin,
     modifyMode: BinModifyMode
 ) {
     val isCreating = modifyMode == BinModifyMode.MODE_ADD
-    val canDelete = modifyMode == BinModifyMode.MODE_EDIT
+//    val canDelete = modifyMode == BinModifyMode.MODE_EDIT
 
     val binMut by remember { mutableStateOf(binOrig) }
 
@@ -170,7 +172,7 @@ fun ModifyBinScreen(
                         viewModel.updateBin(bin)
                     }
 
-                    navHostController?.navigateUp()
+                    navigateUp()
                     Log.e("BinNavigation", "Navigated back to ViewBinsScreen")
                 }
             ) {
@@ -178,47 +180,24 @@ fun ModifyBinScreen(
             }
         }
     ) { padding ->
-        Column (
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        LazyColumn (
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxHeight().padding(24.dp)
         ) {
-
-            val titleText = if (isCreating) "Add a new Bin"
-                            else            "Edit Bin"
-
-            // Title Text
-            Text(
-                text = titleText,
-                fontSize = 24.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp, horizontal = 24.dp)
-            )
-
-            if (canDelete) {
-                DeleteBinButton(onClick = {
-                    viewModel.deleteBin(binMut.bin)
-                    navHostController?.navigateUp()
-                })
+            //item { TitleText(isCreating) }
+            item { BinNameCard(binNameStr) }
+            item { BinLastCollectDateTimeCards(
+                    binLastCollectDate,
+                    binCollectTime,
+                    lblTextSize,
+                    showDateDialog = { dateDialogState.show() },
+                    showTimeDialog = { timeDialogState.show() }
+                )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-            BinNameCard(binNameStr)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            BinLastCollectDateTimeCards(
-                binLastCollectDate, binCollectTime, lblTextSize, dateDialogState, timeDialogState
-            )
-
-            Spacer(Modifier.height(8.dp))
-            BinCollectIntervalCard(binCollectIntervalDays, lblTextSize)
-            Spacer(Modifier.height(8.dp))
-            BinColourAndIconCard(binPrimaryColour, colorDialogState, iconName)
-            Spacer(Modifier.height(8.dp))
-            BinNotificationsCard(binReminderSetting)
+            item { BinCollectIntervalCard(binCollectIntervalDays, lblTextSize) }
+            item { BinColourAndIconCard(binPrimaryColour, colorDialogState, iconName) }
+            item { BinNotificationsCard(binReminderSetting) }
         }
     }
 
@@ -227,6 +206,20 @@ fun ModifyBinScreen(
     DateDialogSetup(dateDialogState, binLastCollectDate, binNameStr)
     TimeDialogSetup(timeDialogState, binCollectTime, binNameStr)
     ColorDialogSetup(colorDialogState, listOfColors, binPrimaryColour, binNameStr)
+}
+
+@Composable
+fun TitleText(creating: Boolean) {
+    val titleText = if (creating) "Add a new Bin"
+                    else          "Edit Bin"
+
+    // Title Text
+    Text(
+        text = titleText,
+        fontSize = 24.sp,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp, horizontal = 24.dp)
+    )
 }
 
 @Composable
@@ -398,8 +391,8 @@ fun BinLastCollectDateTimeCards(
     binLastCollectDate: MutableState<LocalDate>,
     binLastCollectTime: MutableState<LocalTime>,
     lblTextSize: TextUnit,
-    dateDialogState: MaterialDialogState,
-    timeDialogState: MaterialDialogState
+    showDateDialog: () -> Unit,
+    showTimeDialog: () -> Unit,
 ) {
     // Choose Last Collection Date/Time
     Row (horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -421,7 +414,7 @@ fun BinLastCollectDateTimeCards(
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Button (onClick = { dateDialogState.show() }) {
+                Button (onClick = { showDateDialog() }) {
                     Text("Change Date")
                 }
             }
@@ -446,7 +439,7 @@ fun BinLastCollectDateTimeCards(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 // Opens Time of First Collection Dialog
-                Button (onClick = { timeDialogState.show() }) {
+                Button (onClick = { showTimeDialog() }) {
                     Text("Change Time")
                 }
             }
@@ -502,9 +495,7 @@ fun BinColourAndIconCard(
                             )
                         },
                         colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                        modifier = Modifier
-                            .width(200.dp)
-                            .align(Alignment.CenterVertically)
+                        modifier = Modifier.width(200.dp).align(Alignment.CenterVertically)
                     )
                     ExposedDropdownMenu(
                         expanded = dropdownMenuExpanded,
@@ -532,7 +523,7 @@ fun BinColourAndIconCard(
 @Composable
 fun BinNotificationsCard(binReminderSetting: MutableState<Boolean>) {
     val context = LocalContext.current
-    var notificationPermissionGotten by remember {
+    val notificationPermissionGotten by remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             mutableStateOf(
                 ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
@@ -541,7 +532,7 @@ fun BinNotificationsCard(binReminderSetting: MutableState<Boolean>) {
             mutableStateOf(true)
         }
     }
-    var alarmPermissionGotten by remember {
+    val alarmPermissionGotten by remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             mutableStateOf(
                 ContextCompat.checkSelfPermission(context, Manifest.permission.SCHEDULE_EXACT_ALARM)
@@ -550,36 +541,43 @@ fun BinNotificationsCard(binReminderSetting: MutableState<Boolean>) {
             mutableStateOf(true)
         }
     }
+    val anyPermissionMissing by
+        remember { mutableStateOf(!alarmPermissionGotten || !notificationPermissionGotten) }
 
     Card (backgroundColor = MaterialTheme.colors.secondary,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column (modifier = Modifier.padding(20.dp)) {
-            Row (horizontalArrangement = Arrangement.SpaceBetween) {
+            Row (
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+            ) {
                 Text(
-                    "Send reminder 24 hours before bin due",
-                    modifier = Modifier.fillMaxWidth(0.75f)
+                    "Send reminder notification 24 hours before bin is due",
+                    modifier = Modifier
+                        .fillMaxWidth(0.65f)
+                        .alpha(if (anyPermissionMissing) 0.5f else 1f)
                 )
                 Spacer(Modifier.weight(1f))
-
-                if (!notificationPermissionGotten || !alarmPermissionGotten) {
-                    val vm = viewModel<AppViewModel>()
-                    vm.visiblePermissionDialogQueue.clear()
-                    if (!notificationPermissionGotten)
-                        vm.visiblePermissionDialogQueue.add(Manifest.permission.POST_NOTIFICATIONS)
-                    if (!alarmPermissionGotten)
-                        vm.visiblePermissionDialogQueue.add(Manifest.permission.SCHEDULE_EXACT_ALARM)
-                    ButtonToGetPermissions()
-                }
-                else {
-                    Checkbox(
-                        checked = binReminderSetting.value,
-                        onCheckedChange = {
-                            binReminderSetting.value = it
-                        }
-                    )
-                }
+                Checkbox(
+                    checked = binReminderSetting.value,
+                    onCheckedChange = {
+                        binReminderSetting.value = it
+                    },
+                    enabled = !anyPermissionMissing
+                )
+            }
+            if (anyPermissionMissing) {
+                val vm = viewModel<AppViewModel>()
+                vm.visiblePermissionDialogQueue.clear()
+                if (!notificationPermissionGotten)
+                    vm.visiblePermissionDialogQueue.add(Manifest.permission.POST_NOTIFICATIONS)
+                if (!alarmPermissionGotten)
+                    vm.visiblePermissionDialogQueue.add(Manifest.permission.SCHEDULE_EXACT_ALARM)
+                ButtonToGetPermissions(Modifier.align(Alignment.CenterHorizontally))
             }
         }
     }
@@ -587,7 +585,7 @@ fun BinNotificationsCard(binReminderSetting: MutableState<Boolean>) {
 
 
 @Composable
-fun ButtonToGetPermissions() {
+fun ButtonToGetPermissions(modifier: Modifier) {
     val viewModel = viewModel<AppViewModel>()
     val dialogQueue = viewModel.visiblePermissionDialogQueue
 
@@ -609,8 +607,7 @@ fun ButtonToGetPermissions() {
         PermissionProviderFactory.from(permission)?.let {
             PermissionResultDialog(
                 permissionTextProvider = it,
-                // Todo - change this to store the permission status
-                isPermanentlyDenied = false,
+                isPermanentlyDenied = viewModel.isPermanentlyDenied(permission),
                 onDismiss = viewModel::dismissDialog,
                 onOkay = {
                     viewModel.dismissDialog()
@@ -624,12 +621,15 @@ fun ButtonToGetPermissions() {
         }
     }
 
-    Button (onClick = {
-        val firstPermission = viewModel.visiblePermissionDialogQueue.first()
-        permissionResultLauncher.launch(arrayOf(firstPermission))
-        Log.d("PermissionLauncher", "Requesting permission $firstPermission")
-    }) {
-        Text("Request")
+    Button (
+        onClick = {
+            val firstPermission = viewModel.visiblePermissionDialogQueue.first()
+            permissionResultLauncher.launch(arrayOf(firstPermission))
+            Log.d("PermissionLauncher", "Requesting permission $firstPermission")
+        },
+        modifier = modifier
+    ) {
+        Text("Grant Permissions")
     }
 }
 
@@ -669,9 +669,7 @@ fun DrawIconFromName(iconName: String?) {
         Image(
             painterResource(it),
             "Preview bin icon",
-            modifier = Modifier
-                .width(25.dp)
-                .aspectRatio(1f)
+            modifier = Modifier.width(25.dp).aspectRatio(1f)
         )
         Spacer(Modifier.width(4.dp))
     }
@@ -684,7 +682,7 @@ fun PreviewModifyBin() {
     JustBinTimeTheme(darkTheme = true) {
         val bin = BinFactory().makeLandfillBinWithColours()
         Surface {
-            ModifyBinScreen(simBinViewModel, null, bin, BinModifyMode.MODE_EDIT)
+            ModifyBinScreen(simBinViewModel, { true }, bin, BinModifyMode.MODE_EDIT)
         }
     }
 }

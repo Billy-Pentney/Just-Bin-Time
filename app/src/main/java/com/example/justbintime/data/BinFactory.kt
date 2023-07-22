@@ -72,7 +72,9 @@ class BinFactory {
             makeRecyclingBinWithColours(),
             makeGardenBinWithColours()
         )
-        return BinUiState(bins)
+        val uiState = BinUiState(bins)
+        uiState.binDuePhrase = "Test Bin Phrase"
+        return uiState
     }
 
     // Constructs the default set of BinIcons

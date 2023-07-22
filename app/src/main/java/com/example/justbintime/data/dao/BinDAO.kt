@@ -45,7 +45,7 @@ interface BinDao {
     fun getBinsWithColours(): List<DisplayableBin>
 
     @Transaction
-    @Query("SELECT * FROM bins")
+    @Query("SELECT * FROM bins ORDER BY nextCollectionDate")
     fun observeAllWithColours(): Flow<List<DisplayableBin>>
 
     @Upsert

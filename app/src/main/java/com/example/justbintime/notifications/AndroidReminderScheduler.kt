@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import com.example.justbintime.data.obj.Bin
 import java.time.Instant
@@ -46,13 +47,19 @@ class AndroidReminderScheduler(val context: Context): ReminderScheduler {
 
     override fun cancel(bin: Bin) {
         val intent = Intent(context, ReminderNotificationService::class.java).apply {
-            putExtra("BIN_NAME", bin.name)
+            putExtra(ReminderNotificationService.EXTRA_BIN_NAME, bin.name)
+            putExtra(ReminderNotificationService.EXTRA_BIN_COLLECT_TIME, bin.getFormattedCollectTime())
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context, bin.binId, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
-        alarmManager.cancel(pendingIntent)
-        Toast.makeText(context, "Disabled reminder for bin \"${bin.name}\"", Toast.LENGTH_SHORT)
-             .show()
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+            Toast.makeText(context,"Disabled reminder for bin \"${bin.name}\"", Toast.LENGTH_SHORT)
+                .show()
+        }
+        else {
+            Log.e("ReminderScheduler", "Cannot disable alarm for bin \"${bin.name}\". Reason: no intent found")
+        }
     }
 }

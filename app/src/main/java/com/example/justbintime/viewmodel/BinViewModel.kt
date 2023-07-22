@@ -36,7 +36,7 @@ class BinViewModel(private val binRepo: BinRepository): ViewModel(), IBinHolder 
 
     private fun addLiveDataObserver() {
         displayBinLive.observeForever { displayBinList ->
-            Log.e("BinViewModel", "BinList updated! Size: {${displayBinList.size}")
+            Log.d("BinViewModel", "BinList updated! Size: ${displayBinList.size}")
             uiState.update {
                 it.copy(displayBinList)
             }
@@ -45,11 +45,11 @@ class BinViewModel(private val binRepo: BinRepository): ViewModel(), IBinHolder 
         // These observers are MANDATORY, otherwise the livedata isn't updated for some reason...
         coloursListLive.observeForever {
             // Do Nothing
-            Log.e("BinViewModel", "ColoursList updated! Size: {${it.size}}")
+            Log.d("BinViewModel", "ColoursList updated! Size: ${it.size}")
         }
         iconListLive.observeForever {
             // Do Nothing
-            Log.e("BinViewModel", "IconList updated! Size: {${it.size}}")
+            Log.d("BinViewModel", "IconList updated! Size: ${it.size}")
         }
     }
 

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -36,7 +38,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -51,14 +52,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.justbintime.BinScreen
-import com.example.justbintime.data.BinUiState
 import com.example.justbintime.R
 import com.example.justbintime.data.BinFactory
-import com.example.justbintime.data.obj.Bin
+import com.example.justbintime.data.BinUiState
 import com.example.justbintime.data.DisplayableBin
+import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.ui.theme.AmberWarning
 import com.example.justbintime.ui.theme.AmberWarningDark
 import com.example.justbintime.ui.theme.GreenPrimary100
@@ -73,12 +71,19 @@ import java.time.LocalDateTime
 
 
 @Composable
-fun ViewBinScreen(viewModel: IBinHolder, navController: NavController) {
-//    val binList by viewModel.binsLive.observeAsState()
+fun ViewBinsScreen(viewModel: IBinHolder,
+                   navigateToAddBin: () -> Unit,
+                   navigateToEditBin: (DisplayableBin) -> Unit,
+                   setTitle: (String) -> Unit
+) {
     val binUiState by viewModel.getUiState().collectAsState()
-    val now by remember { mutableStateOf(LocalDateTime.now()) }
+    val now = LocalDateTime.now()
 
-    Log.e("ViewBinScreen", "Got a BinUIState with " + (binUiState.bwcList.size) + " bins")
+    Log.d("ViewBinScreen", "Got a BinUIState with " + (binUiState.bwcList.size) + " bins")
+
+    setTitle.invoke("My Bins")
+
+    val bins = binUiState.getSortedBins(now)
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -86,17 +91,23 @@ fun ViewBinScreen(viewModel: IBinHolder, navController: NavController) {
         contentPadding = PaddingValues(16.dp),
     ) {
         item {
-            MainStatusText(binUiState, now)
+            MainStatusText(binUiState)
         }
-        items(binUiState.getSortedBins(now)) { b ->
-            DisplayBin(viewModel, navController, b)
+        item {
+            Divider(
+                thickness = 2.dp,
+                modifier = Modifier.padding(vertical = 8.dp, horizontal = 24.dp)
+            )
         }
-        Log.e("DisplayBins", "Attempt to display " + binUiState.bwcList.size)
+        items(bins) { bin ->
+            DisplayBin(viewModel, { navigateToEditBin(bin) }, bin)
+        }
+        Log.d("DisplayBins", "Attempt to display " + binUiState.bwcList.size)
         item {
             Spacer(modifier = Modifier.height(12.dp))
             Row (modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center) {
-                AddBinButton(navController)
+                AddBinButton(navigateToAddBin)
 //                Spacer(modifier= Modifier.width(4.dp))
 //                // Add ability to restore the default three bins
 //                if (!viewModel.initialisedBins) {
@@ -109,50 +120,61 @@ fun ViewBinScreen(viewModel: IBinHolder, navController: NavController) {
 }
 
 @Composable
-fun MainStatusText(binUiState: BinUiState, now: LocalDateTime) {
+fun MainStatusText(binUiState: BinUiState) {
+    val now by remember { mutableStateOf(LocalDateTime.now()) }
     val numBinsAwaiting = binUiState.getNumBinsToBeCollectedSoonText(now)
-//    val originalStatusPhrase =
-    var binStatusText by remember { mutableStateOf(binUiState.getMainBinStatusPhrase()) }
+    var binStatusText = binUiState.getMainBinStatusPhrase()
 
-    Column(
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxHeight(0.25f)
-            .padding(24.dp)
+    Card (
+        backgroundColor = MaterialTheme.colors.secondary,
+        shape = RoundedCornerShape(20.dp)
     ) {
-        Spacer(modifier = Modifier.height(25.dp))
-        Text(
-            text = binStatusText,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            fontSize = 36.sp,
-            color = MaterialTheme.colors.onBackground
-        )
-        Text(
-            text = numBinsAwaiting,
-            textAlign = TextAlign.Center,
-            fontSize = 18.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            fontStyle = FontStyle.Italic,
-            color = MaterialTheme.colors.onBackground
-        )
-        IconButton(
-            onClick = {
-                binUiState.updateMainBinStatusPhrase()
-                binStatusText = binUiState.getMainBinStatusPhrase()
-            },
-            modifier = Modifier.align(Alignment.CenterHorizontally),
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier.fillMaxWidth()
+                               .padding(24.dp, 56.dp, 24.dp, 24.dp)
         ) {
-            Icon(Icons.Default.Refresh, "Refresh the phrase")
+            Text(
+                text = binStatusText,
+                textAlign = TextAlign.Start,
+                fontSize = 36.sp,
+                color = MaterialTheme.colors.onBackground
+            )
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = numBinsAwaiting,
+                    textAlign = TextAlign.Center,
+                    fontSize = 18.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colors.onBackground,
+                    modifier = Modifier.align(Alignment.CenterVertically).alpha(0.8f)
+                )
+                IconButton(
+                    onClick = {
+                        binUiState.updateMainBinStatusPhrase()
+                        binStatusText = binUiState.getMainBinStatusPhrase()
+                    },
+                    modifier = Modifier.align(Alignment.Top).size(35.dp)
+                ) {
+                    Icon(Icons.Default.Refresh, "Refresh Bin Status")
+                }
+            }
+//            Spacer(modifier = Modifier.height(16.dp))
         }
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 
 @Composable
-fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwc: DisplayableBin) {
-    val now by remember { mutableStateOf(LocalDateTime.now()) }
+fun DisplayBin(
+    viewModel: IBinHolder,
+    navigateToEditBin: () -> Unit,
+    bwc: DisplayableBin
+) {
+    val now by remember {  mutableStateOf(LocalDateTime.now()) }
 
     val statusText = bwc.getStatusText(now)
     val actionText = bwc.getActionText(now)
@@ -166,6 +188,8 @@ fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwc: Display
 
     val icon = bwc.getIconId(LocalContext.current)
 
+    Log.d("DisplayBins", "Recomposition of bin ${bwc.bin.name}")
+
     Card(
         border = BorderStroke(2.dp, Color.Black),
         modifier = Modifier.fillMaxWidth(),
@@ -174,14 +198,10 @@ fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwc: Display
     ) {
         Box {
             Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
+                modifier = Modifier.padding(16.dp).fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(35.dp)
+                    modifier = Modifier.fillMaxWidth().height(35.dp)
                 ) {
                     if (icon != null) {
                         Image(
@@ -206,7 +226,7 @@ fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwc: Display
                     IconButton (
                         onClick = {
                             viewModel.setVisibleBin(bwc)
-                            navController.navigate(BinScreen.EditBin.name)
+                            navigateToEditBin()
                         },
                         modifier = Modifier.aspectRatio(1f)
                     ) {
@@ -291,17 +311,14 @@ fun DisplayBin(viewModel: IBinHolder, navController: NavController, bwc: Display
 
 
 @Composable
-fun AddBinButton(navController: NavController) {
+fun AddBinButton(navigateToAddBin: () -> Unit) {
     val bkgColor = if (isSystemInDarkTheme()) GreenPrimary100 else GreenPrimary900
     val frgColor = if (isSystemInDarkTheme()) GreenPrimary900 else GreenPrimary100
 
     Button(
         colors = ButtonDefaults.buttonColors(backgroundColor = bkgColor, contentColor = frgColor),
         shape = CircleShape,
-        onClick = {
-            navController.navigate(BinScreen.AddBin.name)
-            Log.e("BinNavigation", "Navigated to AddBinScreen")
-        },
+        onClick = { navigateToAddBin() },
         modifier = Modifier.fillMaxHeight()
     ) {
         Icon(painterResource(id = R.drawable.icon_add), "Button to add a new Bin", tint = frgColor)
@@ -319,9 +336,7 @@ fun AddDefaultBinsButton(viewModel: BinViewModel?) {
     Button(
         colors = ButtonDefaults.buttonColors(backgroundColor = bkgColor, contentColor = frgColor),
         shape = CircleShape,
-        onClick = {
-            viewModel?.initDefaultBins(context)
-        },
+        onClick = { viewModel?.initDefaultBins(context) },
         modifier = Modifier.fillMaxHeight()
     ) {
         Spacer(Modifier.width(4.dp))
@@ -378,9 +393,8 @@ fun WarningForCollection(bwc: DisplayableBin, darkTheme: Boolean) {
 fun PreviewMainBinScreen() {
     val simBinViewModel = SimBinViewModel(BinFactory().makeUiState())
     JustBinTimeTheme(darkTheme = true) {
-        val nc = rememberNavController()
         Surface {
-            ViewBinScreen(simBinViewModel, nc)
+            ViewBinsScreen(simBinViewModel, {}, {}, {})
         }
     }
 }
