@@ -8,14 +8,15 @@ import com.example.justbintime.ui.theme.BinLandfillColor
 import com.example.justbintime.ui.theme.BinRecyclingColor
 import java.time.LocalDateTime
 
-const val origLandfillCollectDate = "2023-06-13T09:00:00"
-const val origRecyclingCollectDate = "2023-06-20T09:00:00"
-const val origGardenCollectDate = "2023-06-20T09:00:00"
-
 
 // Creates (default/standard) instances of Bins, Colour Schemes and Icons
 // Used when pre-populating the Database
 class BinFactory {
+    companion object {
+        const val origLandfillCollectDate = "2023-06-13T09:00:00"
+        const val origRecyclingCollectDate = "2023-06-20T09:00:00"
+        const val origGardenCollectDate = "2023-06-20T09:00:00"
+    }
 
     fun makeLandfillBin(): Bin {
         return Bin (
@@ -45,7 +46,8 @@ class BinFactory {
         return DisplayableBin(
             makeLandfillBin(),
             BinColours(BinLandfillColor),
-            BinIcon(BinIcon.LANDFILL_RES, BinIcon.LANDFILL_NAME)
+            BinIcon(BinIcon.LANDFILL_RES, BinIcon.LANDFILL_NAME),
+            emptyList()
         )
     }
 
@@ -53,7 +55,8 @@ class BinFactory {
         return DisplayableBin(
             makeRecyclingBin(),
             BinColours(BinRecyclingColor),
-            BinIcon(BinIcon.RECYCLING_RES, BinIcon.RECYCLING_NAME)
+            BinIcon(BinIcon.RECYCLING_RES, BinIcon.RECYCLING_NAME),
+            emptyList()
         )
     }
 
@@ -61,7 +64,8 @@ class BinFactory {
         return DisplayableBin(
             makeGardenBin(),
             BinColours(BinGardenColor),
-            BinIcon(BinIcon.GARDEN_RES, BinIcon.GARDEN_NAME)
+            BinIcon(BinIcon.GARDEN_RES, BinIcon.GARDEN_NAME),
+            emptyList()
         )
     }
 

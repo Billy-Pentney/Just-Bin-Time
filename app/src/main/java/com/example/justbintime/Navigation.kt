@@ -1,5 +1,5 @@
 package com.example.justbintime
 
-enum class BinScreen {
+enum class Screen {
     ViewBins, AddBin, EditBin
 }

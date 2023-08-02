@@ -23,18 +23,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.ExposedDropdownMenuDefaults
-import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -61,18 +59,22 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import com.chargemap.compose.numberpicker.NumberPicker
+import com.example.justbintime.ProvideFloatingActionButton
 import com.example.justbintime.R
 import com.example.justbintime.data.BinFactory
 import com.example.justbintime.data.DisplayableBin
+import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.data.obj.BinColours
 import com.example.justbintime.data.obj.BinIcon
+import com.example.justbintime.data.obj.BinReminder
 import com.example.justbintime.notifications.AndroidReminderScheduler
+import com.example.justbintime.notifications.ReminderScheduler
 import com.example.justbintime.permissions.PermissionProviderFactory
 import com.example.justbintime.permissions.PermissionResultDialog
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.viewmodel.AppViewModel
+import com.example.justbintime.viewmodel.BinViewModel
 import com.example.justbintime.viewmodel.IBinHolder
 import com.example.justbintime.viewmodel.SimBinViewModel
 import com.vanpra.composematerialdialogs.MaterialDialog
@@ -88,124 +90,175 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun ModifyBinScreen(
-    viewModel: IBinHolder,
-    navigateUp: () -> (Boolean),
+    binViewModel: IBinHolder,
+    navigateUp: () -> Boolean,
     binOrig: DisplayableBin,
-    modifyMode: BinModifyMode
+    modifyMode: BinModifyMode,
 ) {
     val isCreating = modifyMode == BinModifyMode.MODE_ADD
-//    val canDelete = modifyMode == BinModifyMode.MODE_EDIT
 
-    val binMut by remember { mutableStateOf(binOrig) }
+    val mutableOriginalBin by remember { mutableStateOf(binOrig) }
 
     val dateDialogState = rememberMaterialDialogState()
     val timeDialogState = rememberMaterialDialogState()
     val colorDialogState = rememberMaterialDialogState()
 
-    val iconName = remember { mutableStateOf(binMut.icon.drawableName) }
+    val iconName = remember { mutableStateOf(mutableOriginalBin.icon.drawableName) }
 
-    val binNameStr = remember { mutableStateOf(binMut.getName()) }
-    val binPrimaryColour = remember { mutableStateOf(binMut.colours.colorPrimary) }
-    val binLastCollectDate = remember { mutableStateOf(binMut.getLastCollectionDate()) }
-    val binCollectTime = remember { mutableStateOf(binMut.getLastCollectionTime()) }
-    val binCollectIntervalDays = remember { mutableStateOf(binMut.getCollectInterval()) }
-    val binReminderSetting = remember { mutableStateOf(binMut.getReminderSetting()) }
+    val binNameStr = remember { mutableStateOf(mutableOriginalBin.getName()) }
+    val binPrimaryColour = remember { mutableStateOf(mutableOriginalBin.colours.colorPrimary) }
+    val binLastCollectDate = remember { mutableStateOf(mutableOriginalBin.getLastCollectionDate()) }
+    val binCollectTime = remember { mutableStateOf(mutableOriginalBin.getLastCollectionTime()) }
+    val binCollectIntervalDays = remember { mutableStateOf(mutableOriginalBin.getCollectInterval()) }
+    val binReminderSetting = remember { mutableStateOf(mutableOriginalBin.getReminderSetting()) }
 
     val lblTextSize = 14.sp
 
+    // Add a FAB to the Homepage Scaffold
+    ProvideFloatingActionButton {
+        SaveBinFab(
+            binViewModel,
+            isCreating, mutableOriginalBin, binNameStr,
+            binLastCollectDate, binCollectTime, binCollectIntervalDays,
+            binReminderSetting, binPrimaryColour, iconName, navigateUp
+        )
+    }
+
+    LazyColumn (
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxHeight().padding(24.dp)
+    ) {
+        //item { TitleText(isCreating) }
+        item { BinNameCard(binNameStr) }
+        item { BinLastCollectDateTimeCards(
+                binLastCollectDate,
+                binCollectTime,
+                lblTextSize,
+                showDateDialog = { dateDialogState.show() },
+                showTimeDialog = { timeDialogState.show() }
+            )
+        }
+        item { BinCollectIntervalCard(binCollectIntervalDays, lblTextSize) }
+        item { BinColourAndIconCard(binPrimaryColour, colorDialogState, iconName) }
+        item { BinNotificationsCard(binReminderSetting) }
+    }
+
+    val listOfColors = binViewModel.getColours()
+    // Setup the dialog pickers
+    DateDialogSetup(dateDialogState, binLastCollectDate, binNameStr)
+    TimeDialogSetup(timeDialogState, binCollectTime, binNameStr)
+    ColorDialogSetup(colorDialogState, listOfColors, binPrimaryColour, binNameStr)
+}
+
+
+@Composable
+fun SaveBinFab(
+    binViewModel: IBinHolder,
+    isCreating: Boolean,
+    binMut: DisplayableBin,
+    binNameStr: MutableState<String>,
+    binLastCollectDate: MutableState<LocalDate>,
+    binCollectTime: MutableState<LocalTime>,
+    binCollectIntervalDays: MutableState<Int>,
+    binReminderSetting: MutableState<Boolean>,
+    binPrimaryColour: MutableState<Color>,
+    iconName: MutableState<String>,
+    navigateUp: () -> Boolean
+) {
     val context = LocalContext.current
+    val reminderScheduler = AndroidReminderScheduler(context)
 
-    Scaffold(
-        floatingActionButtonPosition = FabPosition.End,
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val collectAt = LocalDateTime.of(binLastCollectDate.value, binCollectTime.value)
-                    // Make a new bin, updating the properties according to the form
-                    val bin = binMut.bin.copy(
-                        name = binNameStr.value,
-                        daysBetweenCollections = binCollectIntervalDays.value
-                    )
-                    bin.daysBetweenCollections = binCollectIntervalDays.value
-                    // Update the collection date (and importantly, recalculate nextCollectionDate)
-                    bin.setCollectionDate(collectAt)
+    FloatingActionButton(
+        backgroundColor = MaterialTheme.colors.secondary,
+        onClick = {
+            val collectAt = LocalDateTime.of(binLastCollectDate.value, binCollectTime.value)
+            // Make a new bin, updating the properties according to the form
+            val newBin = binMut.bin.copy(
+                name = binNameStr.value,
+                daysBetweenCollections = binCollectIntervalDays.value
+            )
+            // Update the collection date (and importantly, recalculate nextCollectionDate)
+            newBin.setCollectionDate(collectAt)
 
-                    // Try to get the ID of the existing Colour Scheme
-                    var bcId = viewModel.getBinColoursId(binPrimaryColour.value)
-                    // If it can't be found, make a new one and add it
-                    if (bcId == null) {
-                        val colours = BinColours(binPrimaryColour.value)
-                        viewModel.insertColour(colours)
-                        bcId = viewModel.getBinColoursId(binPrimaryColour.value)
-                    }
-                    // Then, set the relationship between Bin and BinColours
-                    bin.binColoursId = bcId ?: 1
+            cancelAndOrScheduleBinReminder(
+                binViewModel,
+                binMut.reminders,
+                newBin,
+                binReminderSetting.value,
+                reminderScheduler
+            )
 
-                    // Try to get the ID of the existing Colour Scheme
-                    val iconNameValue = iconName.value
-                    val iconId = viewModel.getBinIconId(iconNameValue)
-                    // If the icon can't be found, then we can't add another
-                    // without knowing the Drawable Resource String identifier
+            addBinColourIconReferences(
+                binViewModel,
+                newBin,
+                binPrimaryColour.value,
+                iconName.value
+            )
+
+            // Push bin changes to the repository
+            if (isCreating) {
+                binViewModel.insertBin(newBin)
+            } else {
+                binViewModel.updateBin(newBin)
+            }
+
+            navigateUp()
+        }
+    ) {
+        Icon(painterResource(R.drawable.icon_save), contentDescription = "Save this Bin")
+    }
+}
+
+
+fun cancelAndOrScheduleBinReminder(
+    viewModel: IBinHolder,
+    oldReminders: List<BinReminder>,
+    bin: Bin,
+    userChoseToSendReminder: Boolean,
+    reminderScheduler: ReminderScheduler
+) {
+    // If the bin was previously sending reminders, cancel them all
+    if (bin.sendReminder) {
+        for (reminder: BinReminder in oldReminders) {
+            viewModel.deleteBinReminder(reminder)
+            reminderScheduler.cancel(reminder)
+        }
+    }
+    // Then, if the bin is now set to send reminders, create a new one
+    if (userChoseToSendReminder) {
+        val reminder = BinReminder(bin)
+        reminderScheduler.schedule(reminder)
+        viewModel.upsertBinReminder(reminder)
+    }
+    bin.sendReminder = userChoseToSendReminder
+}
+
+
+fun addBinColourIconReferences(viewModel: IBinHolder, bin: Bin, binPrimaryColour: Color, iconName: String) {
+    // Try to get the ID of the existing Colour Scheme
+    var bcId = viewModel.getBinColoursId(binPrimaryColour)
+    // If it can't be found, make a new one and add it
+    if (bcId == null) {
+        val colours = BinColours(binPrimaryColour)
+        viewModel.insertColour(colours)
+        bcId = viewModel.getBinColoursId(binPrimaryColour)
+    }
+    // Then, set the relationship between Bin and BinColours
+    bin.binColoursId = bcId ?: 1
+
+    // Try to get the ID of the existing Icon
+    val iconId = viewModel.getBinIconId(iconName)
+    // If the icon can't be found, then we can't add another
+    // without knowing the Drawable Resource String identifier
 //                    if (iconId == null) {
 //                        val iconResStr = BinIcon.nameToResourceString(iconNameValue)
 //                        val icon = BinIcon(0, iconResStr, iconNameValue)
 //                        viewModel?.addIcon(icon)
 //                        iconId = viewModel?.getBinColoursId(iconNameValue)
 //                    }
-                    // Then, set the relationship between Bin and BinColours
-                    bin.binIconId = iconId ?: 1
-
-                    val reminderScheduler = AndroidReminderScheduler(context)
-                    if (binReminderSetting.value) {
-                        reminderScheduler.schedule(bin)
-                    }
-                    else if (bin.sendReminder && !binReminderSetting.value) {
-                        reminderScheduler.cancel(bin)
-                    }
-                    bin.sendReminder = binReminderSetting.value
-
-                    // Push changes to the repo.
-                    if (isCreating) {
-                        viewModel.insertBin(bin)
-                    }
-                    else {
-                        viewModel.updateBin(bin)
-                    }
-
-                    navigateUp()
-                    Log.e("BinNavigation", "Navigated back to ViewBinsScreen")
-                }
-            ) {
-                Icon(painterResource(R.drawable.icon_save), contentDescription = "Save this Bin")
-            }
-        }
-    ) { padding ->
-        LazyColumn (
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxHeight().padding(24.dp)
-        ) {
-            //item { TitleText(isCreating) }
-            item { BinNameCard(binNameStr) }
-            item { BinLastCollectDateTimeCards(
-                    binLastCollectDate,
-                    binCollectTime,
-                    lblTextSize,
-                    showDateDialog = { dateDialogState.show() },
-                    showTimeDialog = { timeDialogState.show() }
-                )
-            }
-            item { BinCollectIntervalCard(binCollectIntervalDays, lblTextSize) }
-            item { BinColourAndIconCard(binPrimaryColour, colorDialogState, iconName) }
-            item { BinNotificationsCard(binReminderSetting) }
-        }
-    }
-
-    val listOfColors = viewModel.getColours()
-    // Setup the dialog pickers
-    DateDialogSetup(dateDialogState, binLastCollectDate, binNameStr)
-    TimeDialogSetup(timeDialogState, binCollectTime, binNameStr)
-    ColorDialogSetup(colorDialogState, listOfColors, binPrimaryColour, binNameStr)
+    // Then, set the reference from Bin to the Icon
+    bin.binIconId = iconId ?: 1
 }
 
 @Composable
@@ -218,18 +271,10 @@ fun TitleText(creating: Boolean) {
         text = titleText,
         fontSize = 24.sp,
         textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp, horizontal = 24.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp, horizontal = 24.dp)
     )
-}
-
-@Composable
-fun DeleteBinButton(onClick: () -> Unit) {
-    Button (
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
-        onClick = onClick,
-    ) {
-        Text("Delete")
-    }
 }
 
 
@@ -495,7 +540,9 @@ fun BinColourAndIconCard(
                             )
                         },
                         colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                        modifier = Modifier.width(200.dp).align(Alignment.CenterVertically)
+                        modifier = Modifier
+                            .width(200.dp)
+                            .align(Alignment.CenterVertically)
                     )
                     ExposedDropdownMenu(
                         expanded = dropdownMenuExpanded,
@@ -552,7 +599,6 @@ fun BinNotificationsCard(binReminderSetting: MutableState<Boolean>) {
             Row (
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
             ) {
                 Text(
@@ -567,7 +613,10 @@ fun BinNotificationsCard(binReminderSetting: MutableState<Boolean>) {
                     onCheckedChange = {
                         binReminderSetting.value = it
                     },
-                    enabled = !anyPermissionMissing
+                    enabled = !anyPermissionMissing,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colors.secondary
+                    )
                 )
             }
             if (anyPermissionMissing) {
@@ -669,7 +718,9 @@ fun DrawIconFromName(iconName: String?) {
         Image(
             painterResource(it),
             "Preview bin icon",
-            modifier = Modifier.width(25.dp).aspectRatio(1f)
+            modifier = Modifier
+                .width(25.dp)
+                .aspectRatio(1f)
         )
         Spacer(Modifier.width(4.dp))
     }
@@ -682,7 +733,13 @@ fun PreviewModifyBin() {
     JustBinTimeTheme(darkTheme = true) {
         val bin = BinFactory().makeLandfillBinWithColours()
         Surface {
-            ModifyBinScreen(simBinViewModel, { true }, bin, BinModifyMode.MODE_EDIT)
+            ModifyBinScreen(
+                simBinViewModel,
+                { true },
+                bin,
+                BinModifyMode.MODE_EDIT,
+//                PaddingValues()
+            )
         }
     }
 }

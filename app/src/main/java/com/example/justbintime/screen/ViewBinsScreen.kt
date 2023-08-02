@@ -52,7 +52,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.justbintime.ProvideAppBarAction
+import com.example.justbintime.ProvideAppBarTitle
+import com.example.justbintime.ProvideFloatingActionButton
 import com.example.justbintime.R
+import com.example.justbintime.SetVisibilityForNavBackButton
 import com.example.justbintime.data.BinFactory
 import com.example.justbintime.data.BinUiState
 import com.example.justbintime.data.DisplayableBin
@@ -73,17 +77,20 @@ import java.time.LocalDateTime
 @Composable
 fun ViewBinsScreen(viewModel: IBinHolder,
                    navigateToAddBin: () -> Unit,
-                   navigateToEditBin: (DisplayableBin) -> Unit,
-                   setTitle: (String) -> Unit
+                   navigateToEditBin: (DisplayableBin) -> Unit
 ) {
     val binUiState by viewModel.getUiState().collectAsState()
     val now = LocalDateTime.now()
 
     Log.d("ViewBinScreen", "Got a BinUIState with " + (binUiState.bwcList.size) + " bins")
 
-    setTitle.invoke("My Bins")
-
     val bins = binUiState.getSortedBins(now)
+
+    SetVisibilityForNavBackButton(false)
+
+    ProvideAppBarTitle { Text("My Bins") }
+    ProvideFloatingActionButton { }
+    ProvideAppBarAction { }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -131,8 +138,9 @@ fun MainStatusText(binUiState: BinUiState) {
     ) {
         Column(
             horizontalAlignment = Alignment.Start,
-            modifier = Modifier.fillMaxWidth()
-                               .padding(24.dp, 56.dp, 24.dp, 24.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp, 56.dp, 24.dp, 24.dp)
         ) {
             Text(
                 text = binStatusText,
@@ -150,14 +158,18 @@ fun MainStatusText(binUiState: BinUiState) {
                     fontSize = 18.sp,
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colors.onBackground,
-                    modifier = Modifier.align(Alignment.CenterVertically).alpha(0.8f)
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .alpha(0.8f)
                 )
                 IconButton(
                     onClick = {
                         binUiState.updateMainBinStatusPhrase()
                         binStatusText = binUiState.getMainBinStatusPhrase()
                     },
-                    modifier = Modifier.align(Alignment.Top).size(35.dp)
+                    modifier = Modifier
+                        .align(Alignment.Top)
+                        .size(35.dp)
                 ) {
                     Icon(Icons.Default.Refresh, "Refresh Bin Status")
                 }
@@ -198,10 +210,14 @@ fun DisplayBin(
     ) {
         Box {
             Column(
-                modifier = Modifier.padding(16.dp).fillMaxWidth()
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().height(35.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(35.dp)
                 ) {
                     if (icon != null) {
                         Image(
@@ -394,7 +410,7 @@ fun PreviewMainBinScreen() {
     val simBinViewModel = SimBinViewModel(BinFactory().makeUiState())
     JustBinTimeTheme(darkTheme = true) {
         Surface {
-            ViewBinsScreen(simBinViewModel, {}, {}, {})
+            ViewBinsScreen(simBinViewModel, {}, {})
         }
     }
 }

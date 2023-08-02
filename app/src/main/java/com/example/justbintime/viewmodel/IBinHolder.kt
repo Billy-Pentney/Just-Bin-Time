@@ -6,6 +6,7 @@ import com.example.justbintime.data.DisplayableBin
 import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.data.obj.BinColours
 import com.example.justbintime.data.obj.BinIcon
+import com.example.justbintime.data.obj.BinReminder
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 
@@ -31,4 +32,7 @@ interface IBinHolder {
 
     fun getColours(): List<Color>
 
+    fun upsertBinReminder(binReminder: BinReminder): Job
+    fun deleteBinReminder(binReminder: BinReminder): Job
+    fun deleteReminderForBin(bin: Bin): Job
 }

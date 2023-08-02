@@ -163,17 +163,7 @@ data class Bin(
     fun getNextReminderTimeInMillis(): Long {
         // Get the date/time in milliseconds exactly 24 hours before the next collection
         val zoneId = ZoneId.systemDefault()
-        return nextCollectionDate.minusDays(1L).atZone(zoneId).toInstant().toEpochMilli()
-    }
-
-    fun getNextReminderTimeAsCalendar(): Calendar {
-        // Get the date/time in milliseconds exactly 24 hours before the next collection
-        val remindTime = nextCollectionDate.minusDays(1L)
-        val calendar = Calendar.getInstance().apply {
-            set(remindTime.year, remindTime.monthValue, remindTime.dayOfMonth,
-                remindTime.hour, remindTime.minute, remindTime.second)
-        }
-        return calendar
+        return getNextReminderTime().atZone(zoneId).toInstant().toEpochMilli()
     }
 
     fun getCollectIntervalInMillis(): Long {
@@ -183,5 +173,9 @@ data class Bin(
 
     fun getFormattedCollectTime(): String {
         return nextCollectionDate.format(DateTimeFormatter.ofPattern("HH:mm"))
+    }
+
+    fun getNextReminderTime(): LocalDateTime {
+        return nextCollectionDate.minusDays(1L)
     }
 }

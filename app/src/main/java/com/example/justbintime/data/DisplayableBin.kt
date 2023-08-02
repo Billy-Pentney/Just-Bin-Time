@@ -6,6 +6,7 @@ import androidx.room.Relation
 import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.data.obj.BinColours
 import com.example.justbintime.data.obj.BinIcon
+import com.example.justbintime.data.obj.BinReminder
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -16,7 +17,9 @@ data class DisplayableBin(
     @Relation(parentColumn = "binColoursId", entityColumn = "bcId")
     val colours: BinColours,
     @Relation(parentColumn = "binIconId", entityColumn = "iconId")
-    val icon: BinIcon
+    val icon: BinIcon,
+    @Relation(parentColumn = "binId", entityColumn = "referencedBinId")
+    val reminders: List<BinReminder> = listOf()
 ) {
     fun getName(): String {
         return bin.name

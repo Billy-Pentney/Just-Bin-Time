@@ -30,24 +30,24 @@ interface BinDao {
     @Update
     fun update(vararg bin: Bin)
 
-//    @Query("SELECT * FROM bins")
-//    fun observeAll(): Flow<List<Bin>>
+    @Upsert
+    fun upsert(vararg bin: Bin)
 
     @Query("DELETE FROM bins")
     fun deleteAll()
 
+    @Query("SELECT * FROM bins " +
+            "WHERE sendReminder IS 1 " +
+            "ORDER BY nextCollectionDate DESC LIMIT 1")
+    fun getNextBinForReminder(): List<Bin>
 
-
-    // Migrating to BinWithColours
+    // Migrating to DisplayableBin
 
     @Transaction
     @Query("SELECT * FROM bins")
-    fun getBinsWithColours(): List<DisplayableBin>
+    fun getAllDisplayableBins(): List<DisplayableBin>
 
     @Transaction
     @Query("SELECT * FROM bins ORDER BY nextCollectionDate")
-    fun observeAllWithColours(): Flow<List<DisplayableBin>>
-
-    @Upsert
-    fun upsert(vararg bin: Bin)
+    fun observeAllDisplayableBins(): Flow<List<DisplayableBin>>
 }

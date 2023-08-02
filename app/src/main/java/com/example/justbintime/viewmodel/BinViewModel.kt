@@ -14,6 +14,7 @@ import com.example.justbintime.data.DisplayableBin
 import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.data.obj.BinColours
 import com.example.justbintime.data.obj.BinIcon
+import com.example.justbintime.data.obj.BinReminder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,8 @@ class BinViewModel(private val binRepo: BinRepository): ViewModel(), IBinHolder 
     private val displayBinLive: LiveData<List<DisplayableBin>> = binRepo.allDisplayableBins.asLiveData()
     private val coloursListLive = binRepo.allBinColours.asLiveData()
     private val iconListLive = binRepo.allBinIcons.asLiveData()
+    private val reminderListLive = binRepo.reminders.asLiveData()
+    val soonestReminderLive = binRepo.soonestReminder.asLiveData()
 
     private val uiState = MutableStateFlow(BinUiState())
     var initialisedBins = false
@@ -69,7 +72,6 @@ class BinViewModel(private val binRepo: BinRepository): ViewModel(), IBinHolder 
     fun deleteAllBins() = viewModelScope.launch(Dispatchers.IO) {
         binRepo.deleteAllBins()
     }
-
 
 
     fun initDefaultBins(context: Context) = viewModelScope.launch(Dispatchers.IO) {
@@ -131,6 +133,18 @@ class BinViewModel(private val binRepo: BinRepository): ViewModel(), IBinHolder 
             return icon
         }
         return iconList[0]
+    }
+
+    override fun upsertBinReminder(binReminder: BinReminder) = viewModelScope.launch(Dispatchers.IO) {
+        binRepo.upsertBinReminder(binReminder)
+    }
+
+    override fun deleteBinReminder(binReminder: BinReminder) = viewModelScope.launch(Dispatchers.IO) {
+        binRepo.deleteBinReminder(binReminder)
+    }
+
+    override fun deleteReminderForBin(bin: Bin) = viewModelScope.launch(Dispatchers.IO) {
+//        binRepo.deleteReminderForBin(bin)
     }
 
 }

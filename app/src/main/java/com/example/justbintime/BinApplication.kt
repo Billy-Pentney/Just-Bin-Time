@@ -11,8 +11,13 @@ import com.example.justbintime.notifications.ReminderNotificationService
 class BinApplication: Application() {
     private val database by lazy { AppDatabase.getDatabase(this) }
 
-    val repo by lazy { BinRepository(database.binDao(), database.colourDao(), database.iconDao()) }
-
+    val repo by lazy {
+        BinRepository(
+            database.binDao(),
+            database.colourDao(),
+            database.iconDao(),
+            database.reminderDao()
+        ) }
 
     override fun onCreate() {
         super.onCreate()

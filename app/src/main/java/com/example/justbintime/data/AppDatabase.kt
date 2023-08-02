@@ -8,21 +8,28 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.justbintime.data.dao.BinDao
+import com.example.justbintime.data.dao.BinReminderDao
 import com.example.justbintime.data.dao.ColourDao
 import com.example.justbintime.data.dao.IconDao
 import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.data.obj.BinColours
 import com.example.justbintime.data.obj.BinColours.Companion.fromColorToLong
 import com.example.justbintime.data.obj.BinIcon
+import com.example.justbintime.data.obj.BinReminder
 import java.util.concurrent.Executors
 
 
-@Database(entities = [Bin::class, BinColours::class, BinIcon::class], version = 14, exportSchema = true)
+@Database(
+    entities = [Bin::class, BinColours::class, BinIcon::class, BinReminder::class],
+    version = 16,
+    exportSchema = true
+)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun binDao(): BinDao
     abstract fun colourDao(): ColourDao
     abstract fun iconDao(): IconDao
+    abstract fun reminderDao(): BinReminderDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

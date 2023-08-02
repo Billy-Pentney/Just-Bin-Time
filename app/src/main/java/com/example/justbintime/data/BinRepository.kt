@@ -4,35 +4,27 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.WorkerThread
 import com.example.justbintime.data.dao.BinDao
+import com.example.justbintime.data.dao.BinReminderDao
 import com.example.justbintime.data.dao.ColourDao
 import com.example.justbintime.data.dao.IconDao
 import com.example.justbintime.data.obj.Bin
 import com.example.justbintime.data.obj.BinColours
 import com.example.justbintime.data.obj.BinIcon
+import com.example.justbintime.data.obj.BinReminder
 import kotlinx.coroutines.flow.Flow
 
 class BinRepository(
     private val binDao: BinDao,
     private val colourDao: ColourDao,
-    private val iconDao: IconDao
+    private val iconDao: IconDao,
+    private val reminderDao: BinReminderDao
 ) {
-    val allDisplayableBins: Flow<List<DisplayableBin>> = binDao.observeAllWithColours()
+    val allDisplayableBins: Flow<List<DisplayableBin>> = binDao.observeAllDisplayableBins()
     val allBinColours: Flow<List<BinColours>> = colourDao.observeAll()
     val allBinIcons: Flow<List<BinIcon>> = iconDao.observeAll()
-//    private val iconResourceMapLive: LiveData<Map<String, Int>> = iconDao.observeMapByDrawableStr()
-
-//    @WorkerThread
-//    suspend fun addBin(dbin: DisplayableBin) {
-//        iconDao.upsert(dbin.icon)
-//        colourDao.upsert(dbin.colours)
-//        val icon = iconDao.getByResourceString(dbin.icon.drawableResStr).first()
-//        val retrievedColours = colourDao.getByPrimary(dbin.colours.cPrimary).first()
-//        dbin.bin.binIconId = icon.iconId
-//        dbin.bin.binColoursId = retrievedColours.bcId
-//
-//        binDao.upsert(dbin.bin)
-//        Log.d("BinRepository", "Added bin \"${dbin.bin.name}\" successfully")
-//    }
+    val reminders: Flow<List<BinReminder>> = reminderDao.observeAllOrderedSoonestFirst()
+    // Stores the BinReminder which is next to be scheduled and to be triggered
+    val soonestReminder: Flow<BinReminder?> = reminderDao.observeSoonestReminder()
 
     @WorkerThread
     suspend fun insertBin(bin: Bin) {
@@ -74,4 +66,13 @@ class BinRepository(
         AppDatabase.initDatabase(db)
     }
 
+    @WorkerThread
+    suspend fun upsertBinReminder(binReminder: BinReminder) {
+        reminderDao.upsert(binReminder)
+    }
+
+    @WorkerThread
+    suspend fun deleteBinReminder(binReminder: BinReminder) {
+        reminderDao.delete(binReminder)
+    }
 }

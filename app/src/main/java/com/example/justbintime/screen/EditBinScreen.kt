@@ -1,13 +1,23 @@
 package com.example.justbintime.screen
 
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavHostController
+import com.example.justbintime.ProvideAppBarAction
+import com.example.justbintime.ProvideAppBarTitle
+import com.example.justbintime.ProvideFloatingActionButton
+import com.example.justbintime.SetVisibilityForNavBackButton
 import com.example.justbintime.data.BinFactory
 import com.example.justbintime.data.DisplayableBin
 import com.example.justbintime.ui.theme.JustBinTimeTheme
-import com.example.justbintime.viewmodel.BinViewModel
 import com.example.justbintime.viewmodel.IBinHolder
 import com.example.justbintime.viewmodel.SimBinViewModel
 
@@ -16,26 +26,30 @@ enum class BinModifyMode { MODE_EDIT, MODE_ADD }
 @Composable
 fun EditBinScreen(
     viewModel: IBinHolder,
-    navigateUp: (String) -> (Boolean),
     binOrig: DisplayableBin,
-    setTitle: (String) -> Unit,
-    showTopBarDeleteAction: () -> Unit,
-    setTopBarDeleteAction: (() -> Unit) -> Unit
+    navigateUp: (String) -> (Boolean)
 ) {
-    setTitle.invoke("Edit My Bin")
-    val navUpWithName = { navigateUp("Edit Bin") }
-
-    showTopBarDeleteAction()
-    setTopBarDeleteAction.invoke {
-        viewModel.deleteBin(binOrig.bin)
-        navUpWithName()
+    val navUpWithName = {
+        navigateUp("Edit Bin")
     }
 
+    SetVisibilityForNavBackButton(true)
+
+    ProvideAppBarTitle { Text("Edit Bin") }
+    ProvideAppBarAction {
+        IconButton(onClick = {
+            navUpWithName()
+            viewModel.deleteBin(binOrig.bin)
+        }
+        ) {
+            Icon(Icons.Filled.Delete, "Delete this bin")
+        }
+    }
     ModifyBinScreen(
         viewModel,
         navUpWithName,
         binOrig,
-        BinModifyMode.MODE_EDIT
+        BinModifyMode.MODE_EDIT,
     )
 }
 
@@ -47,7 +61,7 @@ fun PreviewEditBin() {
     JustBinTimeTheme(darkTheme = true) {
         val bin = BinFactory().makeLandfillBinWithColours()
         Surface {
-            EditBinScreen(simBinViewModel, { true }, bin, { }, { }) { run {} }
+            EditBinScreen(simBinViewModel, bin) { true }
         }
     }
 }

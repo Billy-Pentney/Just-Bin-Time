@@ -4,6 +4,7 @@
     <!-- For Bin-Reminder notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:name=".BinApplication"
         android:allowBackup="true"
@@ -22,8 +23,18 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
         <!-- Register this receiver, so the Notification Service can receive intents -->
-        <receiver android:name="com.example.justbintime.notifications.ReminderNotificationService" />
+        <receiver android:name="com.example.justbintime.notifications.ReminderNotificationService"/>
+        <!-- Receiver is triggered to schedule all notifications when device boots -->
+        <receiver android:name="com.example.justbintime.notifications.AlarmSchedulerResetService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

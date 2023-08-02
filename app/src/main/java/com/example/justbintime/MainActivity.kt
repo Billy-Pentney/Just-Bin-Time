@@ -4,27 +4,44 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.FabPosition
+import androidx.compose.material.FloatingActionButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
+import androidx.navigation.compose.LocalOwnersProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -39,7 +56,9 @@ import com.example.justbintime.screen.ViewBinsScreen
 import com.example.justbintime.ui.theme.JustBinTimeTheme
 import com.example.justbintime.viewmodel.BinViewModel
 import com.example.justbintime.viewmodel.BinViewModelFactory
+import com.example.justbintime.viewmodel.MainScaffoldViewModel
 import com.example.justbintime.viewmodel.SimBinViewModel
+import kotlinx.coroutines.flow.Flow
 
 
 class MainActivity : ComponentActivity() {
@@ -50,6 +69,8 @@ class MainActivity : ComponentActivity() {
         val app = (application as BinApplication)
         val bvmfactory = BinViewModelFactory(app.repo)
         val viewModel = ViewModelProvider(this,bvmfactory)[BinViewModel::class.java]
+
+
 
         setContent {
             JustBinTimeTheme {
@@ -62,17 +83,15 @@ class MainActivity : ComponentActivity() {
                     BinPhraseGenerator.initArrays(LocalContext.current)
 
                     val navController = rememberNavController()
-                    val (topBarTitle, setTopBarTitle) = remember { mutableStateOf("My Bins") }
-                    var deleteActionVisible by remember { mutableStateOf(false) }
 
                     val navigateToAddBin = {
                         Log.d("BinNavigation", "Navigating to AddBinScreen")
-                        navController.navigate(BinScreen.AddBin.name)
+                        navController.navigate(Screen.AddBin.name)
                     }
                     val navigateToEditBin = { bin: DisplayableBin ->
-                        Log.d("BinNavigation", "Navigating to AddBinScreen")
+                        Log.d("BinNavigation", "Navigating to EditBinScreen")
                         viewModel.setVisibleBin(bin)
-                        navController.navigate(BinScreen.EditBin.name)
+                        navController.navigate(Screen.EditBin.name)
                     }
 
                     val navigateUp = { currScreen: String ->
@@ -80,42 +99,37 @@ class MainActivity : ComponentActivity() {
                         navController.navigateUp()
                     }
 
-                    val (topBarDeleteAction, setTopBarDeleteAction) = remember { mutableStateOf({ }) }
-
-                    Scaffold (
+                    Scaffold(
                         topBar = {
-                            TopAppBar(
-                                title = { Text(topBarTitle) },
-                                actions = {
-                                    if (deleteActionVisible) {
-                                        IconButton(onClick = topBarDeleteAction,) {
-                                            Icon(Icons.Filled.Delete, "Delete this bin")
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                    ) { paddingValues ->
+                            MyTopAppBar(navController.currentBackStackEntryFlow) {
+                                navController.navigateUp()
+                            }
+                        },
+                        floatingActionButton = {
+                            MyFloatingActionButton(navController.currentBackStackEntryFlow)
+                        },
+                        floatingActionButtonPosition = FabPosition.End
+                    ) {
+                        padding ->
                         NavHost(
                             navController,
-                            startDestination = BinScreen.ViewBins.name,
-                            modifier = Modifier.padding(paddingValues)
+                            startDestination = Screen.ViewBins.name,
+                            modifier = Modifier.padding(padding)
                         ) {
-                            composable(route = BinScreen.ViewBins.name) {
-                                ViewBinsScreen(viewModel, navigateToAddBin, navigateToEditBin, setTopBarTitle)
+                            composable(route = Screen.ViewBins.name) {
+                                ViewBinsScreen(
+                                    viewModel,
+                                    navigateToAddBin,
+                                    navigateToEditBin
+                                )
                             }
-                            composable(route = BinScreen.AddBin.name) {
-                                AddBinScreen(viewModel, navigateUp, setTopBarTitle)
+                            composable(route = Screen.AddBin.name) {
+                                AddBinScreen(viewModel, navigateUp)
                             }
-                            composable(route = BinScreen.EditBin.name) {
+                            composable(route = Screen.EditBin.name) {
                                 val bin = viewModel.getVisibleBin()
                                 bin?.let {
-                                    EditBinScreen(
-                                        viewModel, navigateUp,
-                                        it, setTopBarTitle,
-                                        { deleteActionVisible = true },
-                                        setTopBarDeleteAction
-                                    )
+                                    EditBinScreen(viewModel, it, navigateUp)
                                 }
                             }
                         }
@@ -125,6 +139,114 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+@Composable
+fun MyFloatingActionButton(currentBackStackEntryFlow: Flow<NavBackStackEntry>) {
+    val currentContentBackStackEntry by produceState(
+        initialValue = null as NavBackStackEntry?,
+        producer = {
+            currentBackStackEntryFlow.collect { value = it }
+        }
+    )
+    val stateHolder = rememberSaveableStateHolder()
+    currentContentBackStackEntry?.LocalOwnersProvider(stateHolder) {
+        val scaffoldViewModel = viewModel<MainScaffoldViewModel>()
+        scaffoldViewModel.fabState?.let { it() }
+    }
+}
+
+@Composable
+fun MyTopAppBar(
+    currentBackStackEntryFlow: Flow<NavBackStackEntry>,
+    navigateUp: () -> Unit
+) {
+    val currentContentBackStackEntry by produceState(
+        initialValue = null as NavBackStackEntry?,
+        producer = {
+            currentBackStackEntryFlow.collect { value = it }
+        }
+    )
+
+    val stateHolder = rememberSaveableStateHolder()
+    currentContentBackStackEntry?.LocalOwnersProvider(stateHolder) {
+        val scaffoldViewModel = viewModel<MainScaffoldViewModel>()
+
+        TopAppBar(
+            navigationIcon = if (scaffoldViewModel.visibleTopBarBackButton) {
+//                currentContentBackStackEntry?.LocalOwnersProvider(stateHolder) {
+//                    if (scaffoldViewModel.visibleTopBarBackButton) {
+                    { BackNavIconButton { navigateUp() } }
+                    }
+            else {
+                 null }
+//                }
+            ,
+            title = {
+//                val stateHolder = rememberSaveableStateHolder()
+//                currentContentBackStackEntry?.LocalOwnersProvider(stateHolder) {
+//                    val scaffoldViewModel = viewModel<MainScaffoldViewModel>()
+                    scaffoldViewModel.topBarTitleState?.let { it() }
+//                }
+            },
+            actions = {
+//                val stateHolder = rememberSaveableStateHolder()
+//                currentContentBackStackEntry?.LocalOwnersProvider(stateHolder) {
+//                    val scaffoldViewModel = viewModel<MainScaffoldViewModel>()
+                    scaffoldViewModel.topBarActionState?.let { it() }
+//                }
+            }
+        )
+    }
+}
+
+@Composable
+fun BackNavIconButton(
+    navigateUp: () -> Unit
+) {
+    IconButton(
+        onClick = { navigateUp() },
+        content = {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Arrow pointing backwards"
+            )
+        }
+    )
+}
+
+@Composable
+fun ProvideAppBarAction(actions: @Composable RowScope.() -> Unit) {
+    val actionViewModel = viewModel<MainScaffoldViewModel>()
+    SideEffect { actionViewModel.topBarActionState = actions }
+}
+
+@Composable
+fun ProvideAppBarTitle(title: @Composable () -> Unit) {
+    val actionViewModel = viewModel<MainScaffoldViewModel>()
+    SideEffect { actionViewModel.topBarTitleState = title }
+}
+
+@Composable
+fun ProvideFloatingActionButton(fab: @Composable () -> Unit) {
+    val actionViewModel = viewModel<MainScaffoldViewModel>()
+    Log.d("FAB_SET", "Set the fab")
+    SideEffect { actionViewModel.fabState = fab }
+}
+
+@Composable
+fun SetVisibilityForNavBackButton(visible: Boolean) {
+    val actionViewModel = viewModel<MainScaffoldViewModel>()
+    SideEffect { actionViewModel.visibleTopBarBackButton = visible }
+}
+
+
+
+
+
+
+
+
+
 
 
 @Preview(showBackground = true)
